@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Live Delivery Tracking</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+body{
+  font-family:Arial, sans-serif;
+  background:#f4f7fb;
+  margin:0;
+  padding:20px;
+}
+
+h2{
+  margin-top:0;
+  color:#1f2937;
+}
+
+#map{
+  height:600px;
+  width:100%;
+  border-radius:12px;
+  box-shadow:0 18px 45px rgba(15,23,42,0.12);
+}
+
+.status-bar {
+  margin:16px 0;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-size:14px;
+  color:#475569;
+}
+
+.status-chip {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  background:#ffffff;
+  border:1px solid #e2e8f0;
+  border-radius:999px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>🚚 Live Delivery Tracking</h2>
+<div class="status-bar">
+  <div class="status-chip" id="tracker-status">Loading driver positions…</div>
+  <div class="status-chip" id="tracker-location">GPS: waiting for permission…</div>
+  <div class="status-chip" id="tracker-updated">Last update: --</div>
+</div>
+
+<div id="map"></div>
+
+{% raw %}
+<script>
+const map = L.map('map').setView([19.0760, 72.8777], 10);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+const truckIcon = L.icon({
+  iconUrl: 'https://cdn-icons-png.flaticon.com/512/1995/1995470.png',
+  iconSize: [38, 38],
+  iconAnchor: [19, 38],
+  popupAnchor: [0, -32]
+});
+
+const markers = {};
+let userMarker = null;
+const statusEl = document.getElementById('tracker-status');
+const locationEl = document.getElementById('tracker-location');
+const updatedEl = document.getElementById('tracker-updated');
+
+function updateMapBounds() {
+  const bounds = [];
+  Object.values(markers).forEach(marker => bounds.push(marker.getLatLng()));
+  if (userMarker) bounds.push(userMarker.getLatLng());
+  if (bounds.length) {
+    map.fitBounds(bounds, { padding: [50, 50] });
+  }
+}
+
+function trackUserLocation() {
+  if (!navigator.geolocation) {
+    locationEl.textContent = 'GPS not supported in this browser';
+    return;
+  }
+
+  function setPosition(position) {
+    const lat = position.coords.latitude;
+    const lon = position.coords.longitude;
+    const coords = [lat, lon];
+    locationEl.textContent = `GPS: ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+
+    if (userMarker) {
+      userMarker.setLatLng(coords);
+    } else {
+      userMarker = L.circleMarker(coords, {
+        radius: 9,
+        color: '#2563eb',
+        fillColor: '#3b82f6',
+        fillOpacity: 0.8,
+        weight: 2
+      })
+        .addTo(map)
+        .bindPopup('<strong>Your Location</strong><br>Live GPS position');
+      userMarker.openPopup();
+    }
+
+    updateMapBounds();
+  }
+
+  function onError(error) {
+    locationEl.textContent = `GPS unavailable: ${error.message}`;
+  }
+
+  navigator.geolocation.watchPosition(setPosition, onError, {
+    enableHighAccuracy: true,
+    maximumAge: 5000,
+    timeout: 10000
+  });
+}
+
+async function loadAgentLocations() {
+  try {
+    const response = await fetch('/api/delivery/agent-locations', {
+      credentials: 'same-origin'
+    });
+    const data = await response.json();
+    if (!data.success) {
+      statusEl.textContent = 'Unable to load live tracking: ' + (data.error || 'server error');
+      return;
+    }
+
+    const agents = Array.isArray(data.agents) ? data.agents : [];
+    if (!agents.length) {
+      statusEl.textContent = 'No active driver locations available.';
+      return;
+    }
+
+    statusEl.textContent = `Tracking ${agents.length} driver${agents.length === 1 ? '' : 's'}`;
+    updatedEl.textContent = 'Last update: ' + new Date().toLocaleTimeString();
+
+    const bounds = [];
+    agents.forEach(agent => {
+      const key = `agent-${agent.id}`;
+      const position = [agent.lat, agent.lon];
+      bounds.push(position);
+      const popupText = `<strong>${agent.name}</strong><br>${agent.status}`;
+
+      if (markers[key]) {
+        markers[key].setLatLng(position).setPopupContent(popupText);
+      } else {
+        markers[key] = L.marker(position, { icon: truckIcon })
+          .addTo(map)
+          .bindPopup(popupText);
+      }
+    });
+
+    if (bounds.length) {
+      updateMapBounds();
+    }
+  } catch (error) {
+    statusEl.textContent = 'Live tracking update failed.';
+    console.error('Live tracking error:', error);
+  }
+}
+
+trackUserLocation();
+loadAgentLocations();
+setInterval(loadAgentLocations, 7000);
+</script>
+{% endraw %}
+
+</body>
+
+</html>

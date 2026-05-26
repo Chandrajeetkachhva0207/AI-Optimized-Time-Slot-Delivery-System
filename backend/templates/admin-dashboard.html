@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartParcel AI — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --navy:#0f1624;--navy2:#162032;--navy3:#1e2d42;--card:#1a2535;
+  --border:rgba(255,255,255,0.08);
+  --blue:#3b9eff;--green:#22d07a;--yellow:#fbbf24;--red:#ff5e6c;--teal:#2de0c4;
+  --text:#e4eaf4;--muted:#7a8fa8;--sidebar:230px;
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--navy);color:var(--text);min-height:100vh;display:flex;}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);background:var(--navy2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;}
+.logo{padding:22px 20px 16px;border-bottom:1px solid var(--border);}
+.logo-name{font-size:16px;font-weight:800;color:#fff;display:flex;align-items:center;gap:9px;}
+.logo-icon{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.logo-tag{font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:1px;text-transform:uppercase;}
+.nav{flex:1;padding:14px 12px;}
+.nav-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:10px 10px 6px;margin-top:6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:var(--muted);font-size:13.5px;font-weight:500;cursor:pointer;transition:all .2s;text-decoration:none;margin-bottom:2px;}
+.nav-item:hover{background:var(--navy3);color:var(--text);}
+.nav-item.active{background:rgba(59,158,255,.12);color:var(--blue);font-weight:600;}
+.nav-item i{width:16px;text-align:center;font-size:13px;}
+.nav-count{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px;}
+.nav-count.blue{background:var(--blue);}
+.admin-box{margin:12px;padding:12px;background:var(--navy3);border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.admin-av{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--blue),#1e6fcc);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;}
+.admin-name{font-size:13px;font-weight:600;}
+.admin-role{font-size:11px;color:var(--green);}
+
+/* MAIN */
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:rgba(15,22,36,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;}
+.page-title{font-size:18px;font-weight:700;}
+.page-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.search{display:flex;align-items:center;gap:8px;background:var(--navy2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;width:210px;}
+.search input{background:none;border:none;outline:none;color:var(--text);font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;width:100%;}
+.search input::placeholder{color:var(--muted);}
+.search i{color:var(--muted);font-size:12px;}
+.icon-btn{width:36px;height:36px;background:var(--navy2);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;transition:all .2s;position:relative;}
+.icon-btn:hover{color:var(--text);}
+.notif-pip{position:absolute;top:4px;right:4px;min-width:18px;height:18px;padding:0 6px;background:var(--red);color:#fff;font-size:11px;font-weight:700;line-height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;}
+.notif-pip.empty{display:none;}
+.delete-btn{border:none;padding:8px 10px;border-radius:8px;background:var(--red);color:#fff;font-size:12px;font-weight:700;cursor:pointer;transition:background .2s;}
+.delete-btn:hover{background:#d43d55;}
+.live-badge{display:flex;align-items:center;gap:6px;background:rgba(34,208,122,.1);border:1px solid rgba(34,208,122,.25);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;color:var(--green);}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.4s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* CONTENT */
+.content{padding:24px 28px;}
+
+/* SECTION TITLE */
+.sec-title{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;margin-top:28px;display:flex;align-items:center;gap:8px;}
+.sec-title::before{content:'';width:3px;height:14px;background:var(--blue);border-radius:2px;}
+.sec-title:first-child{margin-top:0;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;overflow:hidden;transition:transform .2s;}
+.stat:hover{transform:translateY(-3px);}
+.stat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.stat-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.s1 .stat-icon{background:rgba(59,158,255,.15);color:var(--blue);}
+.s2 .stat-icon{background:rgba(251,191,36,.15);color:var(--yellow);}
+.s3 .stat-icon{background:rgba(59,158,255,.15);color:var(--blue);}
+.s4 .stat-icon{background:rgba(255,94,108,.15);color:var(--red);}
+.s5 .stat-icon{background:rgba(34,208,122,.15);color:var(--green);}
+.s6 .stat-icon{background:rgba(45,224,196,.15);color:var(--teal);}
+.s6 .stat-fill{background:var(--teal);}
+.stat-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;}
+.up{background:rgba(34,208,122,.12);color:var(--green);}
+.dn{background:rgba(255,94,108,.12);color:var(--red);}
+.stat-num{font-size:30px;font-weight:800;line-height:1;}
+.stat-label{font-size:13px;color:var(--muted);margin-top:5px;}
+.stat-bar{height:3px;background:var(--navy3);border-radius:2px;margin-top:14px;overflow:hidden;}
+.stat-fill{height:100%;border-radius:2px;}
+.s1 .stat-fill{background:var(--blue);}
+.s2 .stat-fill{background:var(--yellow);}
+.s3 .stat-fill{background:var(--blue);}
+.s4 .stat-fill{background:var(--red);}
+.s5 .stat-fill{background:var(--green);}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);}
+.card-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.card-action{font-size:12px;color:var(--blue);cursor:pointer;padding:4px 10px;background:rgba(59,158,255,.1);border-radius:6px;transition:background .2s;}
+.card-action:hover{background:rgba(59,158,255,.2);}
+.card-body{padding:20px;}
+
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;}
+.chart-box{height:220px;position:relative;}
+.donut-wrap{display:flex;align-items:center;gap:16px;}
+.donut-box{width:120px;height:120px;flex-shrink:0;}
+.legend{flex:1;}
+.leg-item{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.leg-val{margin-left:auto;font-weight:700;font-family:'JetBrains Mono',monospace;font-size:13px;}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:0 16px 12px;text-align:left;border-bottom:1px solid var(--border);}
+tbody td{padding:13px 16px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.04);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:rgba(255,255,255,.02);}
+.order-id{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--blue);font-weight:500;}
+.cust-cell{display:flex;align-items:center;gap:9px;}
+.cust-av{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#000;flex-shrink:0;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.b-transit{background:rgba(59,158,255,.12);color:var(--blue);}
+.b-done{background:rgba(34,208,122,.12);color:var(--green);}
+.b-pending{background:rgba(251,191,36,.12);color:var(--yellow);}
+.b-cancel{background:rgba(255,94,108,.12);color:var(--red);}
+.b-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+.act-btn{width:26px;height:26px;border-radius:6px;background:var(--navy3);border:1px solid var(--border);color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;transition:all .2s;}
+.act-btn:hover{color:var(--text);}
+
+/* TRACKING */
+.tracking-grid{display:grid;grid-template-columns:1fr 320px;gap:0;}
+.map-area{position:relative;background:#0a1422;border-right:1px solid var(--border);min-height:400px;}
+#mapCanvas{display:block;width:100%;height:400px;}
+.map-legend{position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:6px;}
+.ml-item{display:flex;align-items:center;gap:7px;background:rgba(10,20,35,.88);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:5px 10px;font-size:11px;font-weight:600;}
+.driver-list{overflow-y:auto;max-height:400px;}
+.driver-card{padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s;}
+.driver-card:hover{background:rgba(255,255,255,.03);}
+.driver-card.sel{background:rgba(59,158,255,.07);border-left:3px solid var(--blue);}
+.driver-card:last-child{border-bottom:none;}
+.dr-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.dr-av{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#000;flex-shrink:0;position:relative;}
+.dr-av .od{position:absolute;bottom:-2px;right:-2px;width:9px;height:9px;border-radius:50%;border:2px solid var(--card);}
+.dr-name{font-size:13px;font-weight:600;}
+.dr-order{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+.dr-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.dri{background:var(--navy3);border-radius:7px;padding:7px 10px;}
+.dri-label{font-size:9px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;}
+.dri-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;margin-top:3px;}
+.dr-prog{margin-top:10px;}
+.dr-prog-top{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px;}
+.prog-bar{height:4px;background:var(--navy3);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:2px;transition:width .5s ease;}
+
+/* AI */
+.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.form-group label{display:block;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.form-control{width:100%;background:var(--navy3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;transition:border-color .2s;}
+.form-control:focus{border-color:rgba(59,158,255,.5);}
+.form-control option{background:var(--navy2);}
+.btn-predict{width:100%;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;}
+.btn-predict:hover{background:#2288ee;transform:translateY(-1px);}
+.btn-predict:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.result-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:240px;color:var(--muted);gap:10px;}
+.result-empty i{font-size:36px;opacity:.3;}
+.result-empty p{font-size:13px;}
+.result-box{display:none;}
+.result-box.show{display:block;}
+.result-top{display:flex;align-items:center;gap:10px;background:rgba(34,208,122,.08);border:1px solid rgba(34,208,122,.2);border-radius:10px;padding:14px;margin-bottom:14px;}
+.result-top i{font-size:24px;color:var(--green);}
+.result-top-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.result-top-val{font-size:22px;font-weight:800;color:var(--green);font-family:'JetBrains Mono',monospace;}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.result-item{background:var(--navy3);border-radius:8px;padding:12px;}
+.result-item-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.result-item-val{font-size:16px;font-weight:700;margin-top:4px;font-family:'JetBrains Mono',monospace;}
+.result-explanation{background:rgba(59,158,255,.06);border:1px solid rgba(59,158,255,.15);border-radius:8px;padding:12px;font-size:12.5px;color:var(--muted);line-height:1.7;}
+.result-explanation strong{color:var(--text);}
+    .slot-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:14px;}
+    .slot-card{background:var(--navy3);border:1px solid var(--border);border-radius:14px;padding:14px;transition:transform .2s,border-color .2s,box-shadow .2s;}
+    .slot-card.optimal{border-color:var(--green);box-shadow:0 0 0 1px rgba(34,208,122,.18);transform:scale(1.01);}
+    .slot-card h4{font-size:13px;font-weight:700;margin-bottom:6px;}
+    .slot-tag{display:inline-flex;padding:5px 10px;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+    .slot-tag.best{background:rgba(34,208,122,.12);color:var(--green);}
+    .slot-tag.fast{background:rgba(59,158,255,.12);color:var(--blue);}
+    .slot-tag.safe{background:rgba(251,191,36,.12);color:var(--yellow);}
+    .slot-line{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted);margin-top:10px;}
+    .slot-metric{margin-top:10px;font-size:12px;color:var(--text);line-height:1.4;}
+
+/* TOAST */
+.toasts{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast{display:flex;align-items:center;gap:10px;background:var(--navy2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:13px;min-width:240px;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:toastIn .3s ease;}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+
+/* RESPONSIVE */
+@media(max-width:1100px){.stats-row{grid-template-columns:1fr 1fr;}.charts-row{grid-template-columns:1fr;}.tracking-grid{grid-template-columns:1fr;}.ai-grid{grid-template-columns:1fr;}}
+@media(max-width:768px){:root{--sidebar:0px;}.sidebar{display:none;}.content{padding:16px;}}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:var(--navy);}::-webkit-scrollbar-thumb{background:var(--navy3);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-name"><div class="logo-icon">⚡</div>SmartParcel AI</div>
+    <div class="logo-tag">Admin Dashboard</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-label">Menu</div>
+    <a id="navDashboard" class="nav-item active" onclick="goToSection('dashboardSection','navDashboard')"><i class="fa fa-th-large"></i> Dashboard</a>
+    <a id="navOrders" class="nav-item" onclick="goToSection('ordersSection','navOrders')"><i class="fa fa-box"></i> Orders <span class="nav-count" id="navOrderCount">5</span></a>
+    <a id="navCustomers" class="nav-item" onclick="goToSection('customersSection','navCustomers'); loadCustomers()"><i class="fa fa-users"></i> Customers <span class="nav-count blue" id="navCustomerCount">85</span></a>
+    <a id="navDeliveries" class="nav-item" onclick="goToSection('liveTrackingSection','navDeliveries')"><i class="fa fa-truck"></i> Deliveries</a>
+    <div class="nav-label">Tools</div>
+    <a href="/admin/delivery" class="nav-item"><i class="fa fa-bolt"></i> AI Delivery Hub</a>
+    <!-- <a class="nav-item"><i class="fa fa-brain"></i> AI Prediction</a> -->
+    <a id="navLiveTracking" class="nav-item" onclick="goToSection('liveTrackingSection','navLiveTracking')"><i class="fa fa-map-marked-alt"></i> Live Tracking</a>
+    <a id="navAnalytics" class="nav-item" onclick="goToSection('analyticsSection','navAnalytics')"><i class="fa fa-chart-bar"></i> Analytics</a>
+    <div class="nav-label">System</div>
+    <a class="nav-item"><i class="fa fa-cog"></i> Settings</a>
+    <a class="nav-item" onclick="logout()" style="color:var(--red)"><i class="fa fa-sign-out-alt"></i> Logout</a>
+  </nav>
+  <div class="admin-box">
+    <div class="admin-av">SA</div>
+    <div><div class="admin-name">Super Admin</div><div class="admin-role">● Online</div></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Dashboard Overview</div>
+      <div class="page-sub" id="clock"></div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-badge"><div class="live-dot"></div> LIVE</div>
+      <div class="search"><i class="fa fa-search"></i><input type="text" placeholder="Search orders, customers..."></div>
+      <div class="icon-btn" onclick="goToSection('ordersSection','navOrders')" title="View new order alerts"><i class="fa fa-bell"></i><div class="notif-pip empty" id="notifCount"></div></div>
+    </div>
+  </div>
+
+  <div class="content" id="dashboardSection">
+
+    <!-- ① STATS -->
+    <div class="sec-title">📊 Stats Overview</div>
+    <div class="stats-row">
+      <div class="stat s1">
+        <div class="stat-top"><div class="stat-icon"><i class="fa fa-box"></i></div><span class="stat-badge up">Total Orders</span></div>
+        <div class="stat-num" id="cnt1">0</div><div class="stat-label">Total Orders</div>
+        <div class="stat-bar"><div class="stat-fill" style="width:100%"></div></div>
+      </div>
+      <div class="stat s2">
+        <div class="stat-top"><div class="stat-icon"><i class="fa fa-clock"></i></div><span class="stat-badge dn">Pending</span></div>
+        <div class="stat-num" id="cnt2">0</div><div class="stat-label">Pending Orders</div>
+        <div class="stat-bar"><div class="stat-fill" style="width:55%"></div></div>
+      </div>
+      <div class="stat s3">
+        <div class="stat-top"><div class="stat-icon"><i class="fa fa-box-open"></i></div><span class="stat-badge up">Packed</span></div>
+        <div class="stat-num" id="cnt6">0</div><div class="stat-label">Packed Orders</div>
+        <div class="stat-bar"><div class="stat-fill" style="width:60%"></div></div>
+      </div>
+      <div class="stat s4">
+        <div class="stat-top"><div class="stat-icon"><i class="fa fa-map-marker-alt"></i></div><span class="stat-badge dn">Out for Delivery</span></div>
+        <div class="stat-num" id="cnt4">0</div><div class="stat-label">Out for Delivery</div>
+        <div class="stat-bar"><div class="stat-fill" style="width:45%"></div></div>
+      </div>
+      <div class="stat s5">
+        <div class="stat-top"><div class="stat-icon"><i class="fa fa-check-circle"></i></div><span class="stat-badge up">Delivered</span></div>
+        <div class="stat-num" id="cnt5">0</div><div class="stat-label">Delivered Orders</div>
+        <div class="stat-bar"><div class="stat-fill" style="width:75%"></div></div>
+      </div>
+    </div>
+
+    <!-- ② ANALYTICS -->
+    <div class="sec-title" id="analyticsSection">📈 Analytics</div>
+    <div class="charts-row">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><i class="fa fa-chart-bar" style="color:var(--blue)"></i> Weekly Deliveries</div>
+          <div style="display:flex;gap:6px;">
+            <div class="card-action" onclick="setChart('bar')">Bar</div>
+            <div class="card-action" onclick="setChart('line')">Line</div>
+          </div>
+        </div>
+        <div class="card-body"><div class="chart-box"><canvas id="mainChart"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title"><i class="fa fa-chart-pie" style="color:var(--teal)"></i> Order Status</div></div>
+        <div class="card-body">
+          <div class="donut-wrap">
+            <canvas class="donut-box" id="donutChart"></canvas>
+            <div class="legend" id="statusLegend"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ ORDERS TABLE -->
+    <div class="sec-title" id="ordersSection">📋 Recent Orders</div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><i class="fa fa-list" style="color:var(--yellow)"></i> Order Management</div>
+        <div class="card-action" onclick="showToast('📋','Exporting...','var(--blue)')">Export CSV</div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Order ID</th><th>Product</th><th>Amount</th><th>Predicted Slot</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="ordersTable">
+            <tr><td colspan="6" class="text-muted">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ④ CUSTOMERS -->
+    <div class="sec-title" id="customersSection">👥 Customers</div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><i class="fa fa-users" style="color:var(--blue)"></i> Customer Directory</div>
+        <div class="card-action" onclick="loadCustomers()">Refresh</div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Type</th></tr></thead>
+          <tbody id="customersTable">
+            <tr><td colspan="4" class="text-muted">Loading customers...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ⑤ LIVE TRACKING -->
+    <div class="sec-title" id="liveTrackingSection">🗺️ Live Driver Tracking</div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><i class="fa fa-satellite-dish" style="color:var(--teal)"></i> Real-Time Driver Locations — India Map</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:12px;color:var(--muted)" id="mapTime"></span>
+          <div class="card-action" onclick="showToast('🗺️','Map refreshed','var(--teal)')"><i class="fa fa-sync-alt"></i> Refresh</div>
+        </div>
+      </div>
+      <div class="tracking-grid">
+        <div class="map-area">
+          <canvas id="mapCanvas"></canvas>
+          <div class="map-legend">
+            <div class="ml-item"><span style="color:var(--green)">●</span><span style="color:var(--green)">Moving (3)</span></div>
+            <div class="ml-item"><span style="color:var(--muted)">●</span><span style="color:var(--muted)">Idle (2)</span></div>
+            <div class="ml-item"><span style="color:var(--blue)">→</span><span style="color:var(--blue)">Selected Route</span></div>
+          </div>
+        </div>
+        <div class="driver-list" id="driverList">
+          <!-- D1 -->
+          <div class="driver-card sel" onclick="pickDriver(0,this)">
+            <div class="dr-top">
+              <div class="dr-av" style="background:linear-gradient(135deg,#fbbf24,#d97706)">D1<div class="od" style="background:var(--green)"></div></div>
+              <div><div class="dr-name">Ramesh Yadav</div><div class="dr-order">#SP-1023 · Smartphone X12</div></div>
+              <span class="badge b-transit" style="margin-left:auto;font-size:10px;"><span class="b-dot"></span>Moving</span>
+            </div>
+            <div class="dr-info">
+              <div class="dri"><div class="dri-label">Speed</div><div class="dri-val" id="spd0" style="color:var(--yellow)">52 km/h</div></div>
+              <div class="dri"><div class="dri-label">ETA</div><div class="dri-val" id="eta0" style="color:var(--teal)">2h 15m</div></div>
+              <div class="dri"><div class="dri-label">Distance</div><div class="dri-val" id="dst0">118 km</div></div>
+            </div>
+            <div class="dr-prog">
+              <div class="dr-prog-top"><span>Mumbai → Pune</span><span id="pct0">42%</span></div>
+              <div class="prog-bar"><div class="prog-fill" id="pf0" style="width:42%;background:linear-gradient(90deg,var(--blue),var(--teal))"></div></div>
+            </div>
+          </div>
+          <!-- D2 -->
+          <div class="driver-card" onclick="pickDriver(1,this)">
+            <div class="dr-top">
+              <div class="dr-av" style="background:linear-gradient(135deg,#2dd4bf,#0891b2)">D2<div class="od" style="background:var(--green)"></div></div>
+              <div><div class="dr-name">Sunil Patil</div><div class="dr-order">#SP-1025 · UltraBook Pro</div></div>
+              <span class="badge b-transit" style="margin-left:auto;font-size:10px;"><span class="b-dot"></span>Moving</span>
+            </div>
+            <div class="dr-info">
+              <div class="dri"><div class="dri-label">Speed</div><div class="dri-val" id="spd1" style="color:var(--yellow)">68 km/h</div></div>
+              <div class="dri"><div class="dri-label">ETA</div><div class="dri-val" id="eta1" style="color:var(--teal)">1h 40m</div></div>
+              <div class="dri"><div class="dri-label">Distance</div><div class="dri-val" id="dst1">89 km</div></div>
+            </div>
+            <div class="dr-prog">
+              <div class="dr-prog-top"><span>Delhi → Jaipur</span><span id="pct1">68%</span></div>
+              <div class="prog-bar"><div class="prog-fill" id="pf1" style="width:68%;background:linear-gradient(90deg,var(--green),var(--teal))"></div></div>
+            </div>
+          </div>
+          <!-- D3 -->
+          <div class="driver-card" onclick="pickDriver(2,this)">
+            <div class="dr-top">
+              <div class="dr-av" style="background:linear-gradient(135deg,#a78bfa,#7c3aed)">D3<div class="od" style="background:var(--green)"></div></div>
+              <div><div class="dr-name">Ankit Sharma</div><div class="dr-order">#SP-1026 · Smart Watch</div></div>
+              <span class="badge b-transit" style="margin-left:auto;font-size:10px;"><span class="b-dot"></span>Moving</span>
+            </div>
+            <div class="dr-info">
+              <div class="dri"><div class="dri-label">Speed</div><div class="dri-val" id="spd2" style="color:var(--yellow)">44 km/h</div></div>
+              <div class="dri"><div class="dri-label">ETA</div><div class="dri-val" id="eta2" style="color:var(--teal)">3h 20m</div></div>
+              <div class="dri"><div class="dri-label">Distance</div><div class="dri-val" id="dst2">147 km</div></div>
+            </div>
+            <div class="dr-prog">
+              <div class="dr-prog-top"><span>Bangalore → Hyderabad</span><span id="pct2">28%</span></div>
+              <div class="prog-bar"><div class="prog-fill" id="pf2" style="width:28%;background:linear-gradient(90deg,var(--blue),#a78bfa)"></div></div>
+            </div>
+          </div>
+          <!-- D4 Idle -->
+          <div class="driver-card" onclick="pickDriver(3,this)">
+            <div class="dr-top">
+              <div class="dr-av" style="background:linear-gradient(135deg,#fb923c,#ea580c)">D4<div class="od" style="background:var(--muted)"></div></div>
+              <div><div class="dr-name">Mahesh Tiwari</div><div class="dr-order">No active order</div></div>
+              <span class="badge" style="margin-left:auto;font-size:10px;background:rgba(122,143,168,.12);color:var(--muted);">Idle</span>
+            </div>
+            <div class="dr-info">
+              <div class="dri"><div class="dri-label">Speed</div><div class="dri-val" style="color:var(--muted)">0 km/h</div></div>
+              <div class="dri"><div class="dri-label">Status</div><div class="dri-val" style="color:var(--muted)">Standby</div></div>
+              <div class="dri"><div class="dri-label">City</div><div class="dri-val" style="color:var(--muted)">Chennai</div></div>
+            </div>
+          </div>
+          <!-- D5 Idle -->
+          <div class="driver-card" onclick="pickDriver(4,this)">
+            <div class="dr-top">
+              <div class="dr-av" style="background:linear-gradient(135deg,#22c55e,#15803d)">D5<div class="od" style="background:var(--muted)"></div></div>
+              <div><div class="dr-name">Deepak Verma</div><div class="dr-order">No active order</div></div>
+              <span class="badge" style="margin-left:auto;font-size:10px;background:rgba(122,143,168,.12);color:var(--muted);">Idle</span>
+            </div>
+            <div class="dr-info">
+              <div class="dri"><div class="dri-label">Speed</div><div class="dri-val" style="color:var(--muted)">0 km/h</div></div>
+              <div class="dri"><div class="dri-label">Status</div><div class="dri-val" style="color:var(--muted)">Standby</div></div>
+              <div class="dri"><div class="dri-label">City</div><div class="dri-val" style="color:var(--muted)">Kolkata</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑤ AI PREDICTION -->
+    <div class="sec-title">🤖 AI Delivery Prediction</div>
+    <div class="ai-grid">
+      <div class="card">
+        <div class="card-head"><div class="card-title"><i class="fa fa-brain" style="color:#a78bfa"></i> Enter Delivery Details</div></div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group"><label>Distance (km)</label><input class="form-control" id="ai-dist" type="number" placeholder="e.g. 35"></div>
+            <div class="form-group"><label>Traffic</label>
+              <select class="form-control" id="ai-traffic">
+                <option value="">Select...</option>
+                <option value="Low">🟢 Low</option>
+                <option value="Medium">🟡 Medium</option>
+                <option value="High">🔴 High</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Weather</label>
+              <select class="form-control" id="ai-weather">
+                <option value="">Select...</option>
+                <option value="Sunny">☀️ Sunny</option>
+                <option value="Cloudy">☁️ Cloudy</option>
+                <option value="Rainy">🌧️ Rainy</option>
+                <option value="Foggy">🌫️ Foggy</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Parcel Type</label>
+              <select class="form-control" id="ai-parcel">
+                <option value="">Select...</option>
+                <option value="Standard">📦 Standard</option>
+                <option value="Express">⚡ Express</option>
+                <option value="Fragile">🫙 Fragile</option>
+                <option value="Heavy">🏋️ Heavy</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-predict" id="predictBtn" onclick="runPrediction()">
+            <i class="fa fa-magic"></i> Predict Delivery Time
+          </button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title"><i class="fa fa-clock" style="color:var(--green)"></i> AI Prediction Result</div></div>
+        <div class="card-body" style="display:flex;flex-direction:column;justify-content:center;min-height:260px;">
+          <div class="result-empty" id="resultEmpty">
+            <i class="fa fa-robot"></i>
+            <p>Fill the form and click <strong>Predict</strong></p>
+            <p style="font-size:12px;opacity:.6">AI will calculate the best delivery slot</p>
+          </div>
+          <div class="result-box" id="resultBox">
+            <div class="result-top">
+              <i class="fa fa-check-circle"></i>
+              <div><div class="result-top-label">Estimated Delivery Time</div><div class="result-top-val" id="res-time">—</div></div>
+            </div>
+            <div class="result-grid">
+              <div class="result-item"><div class="result-item-label">Best Slot</div><div class="result-item-val" id="res-slot" style="color:var(--blue)">—</div></div>
+              <div class="result-item"><div class="result-item-label">Confidence</div><div class="result-item-val" id="res-conf" style="color:var(--green)">—</div></div>
+              <div class="result-item"><div class="result-item-label">Time Window</div><div class="result-item-val" id="res-window" style="color:var(--teal)">—</div></div>
+              <div class="result-item"><div class="result-item-label">Priority</div><div class="result-item-val" id="res-priority" style="color:var(--yellow)">—</div></div>
+            </div>
+            <div class="slot-list" id="slotList"></div>
+            <div class="result-explanation" id="res-explain">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:32px;"></div>
+  </div>
+</main>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+/* CLOCK */
+function tick(){
+  const n=new Date();
+  const d=document.getElementById('clock');
+  const m=document.getElementById('mapTime');
+  const str=n.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · '+n.toLocaleTimeString('en-IN');
+  if(d) d.textContent=str;
+  if(m) m.textContent='Updated: '+n.toLocaleTimeString('en-IN');
+}
+tick(); setInterval(tick,1000);
+
+/* COUNTERS - load from API */
+async function loadDashboard(){
+  try {
+    const r=await fetch('/api/admin/dashboard',{credentials:'same-origin'});
+    const d=await r.json();
+    if(d.success&&d.dashboard){
+      const dash=d.dashboard;
+      countUp('cnt1',dash.total_orders||0);
+      countUp('cnt2',dash.pending_orders||0);
+      countUp('cnt6',dash.packed_orders||0);
+      countUp('cnt3',dash.shipped_orders||0);
+      countUp('cnt4',dash.out_for_delivery_orders||0);
+      countUp('cnt5',dash.delivered_orders||0);
+      renderStatusChart(dash);
+      const notifEl = document.getElementById('notifCount');
+      if(notifEl){
+        const pending = dash.pending_orders || 0;
+        if(pending > 0){
+          notifEl.textContent = pending;
+          notifEl.classList.remove('empty');
+          showToast('🔔', `You have ${pending} pending order${pending === 1 ? '' : 's'}`, 'var(--blue)');
+        } else {
+          notifEl.textContent = '';
+          notifEl.classList.add('empty');
+        }
+      }
+      if(dash.recent_orders&&dash.recent_orders.length>0){
+        const tbody=document.getElementById('ordersTable');
+        if(tbody) tbody.innerHTML=dash.recent_orders.map(o=>`
+          <tr id="order-row-${o.id}"><td><span class="order-id">#SP-${o.id}</span></td>
+          <td>${o.product_name||'-'}</td>
+          <td>₹${(o.price||0).toLocaleString()}</td>
+          <td>${o.predicted_slot||'-'}</td>
+          <td>
+            <select class="form-control" data-order-id="${o.id}" data-prev-status="${o.order_status||'Pending'}" onchange="changeOrderStatus(${o.id}, this.value)">
+              <option value="Pending" ${o.order_status==='Pending'?'selected':''}>Pending</option>
+              <option value="Shipped" ${o.order_status==='Shipped'?'selected':''}>Shipped</option>
+              <option value="Out for Delivery" ${o.order_status==='Out for Delivery'?'selected':''}>Out for Delivery</option>
+              <option value="Delivered" ${o.order_status==='Delivered'?'selected':''}>Delivered</option>
+            </select>
+          </td>
+          <td><button class="delete-btn" onclick="deleteOrder(${o.id})">Delete</button></td></tr>
+        `).join('');
+      }
+    } else { countUp('cnt1',0); countUp('cnt2',0); countUp('cnt3',0); countUp('cnt4',0); countUp('cnt5',0); countUp('cnt6',0); if(window.donutChart){ window.donutChart.data.datasets[0].data = [0,0,0,0,0,0]; window.donutChart.update(); }}
+  } catch(e){ countUp('cnt1',0); countUp('cnt2',0); countUp('cnt3',0); countUp('cnt4',0); countUp('cnt5',0); }
+}
+function countUp(id,target){
+  let c=0; const el=document.getElementById(id); if(!el)return;
+  const s=Math.max(target/80,0.5);
+  const t=setInterval(()=>{ c=Math.min(c+s,target); el.textContent=Math.floor(c).toLocaleString('en-IN'); if(c>=target)clearInterval(t); },16);
+}
+window.addEventListener('load',()=>{
+  setTimeout(() => {
+    loadDashboard();
+    loadCustomers();
+  }, 300);
+});
+
+async function changeOrderStatus(orderId, status) {
+  const select = document.querySelector(`select[data-order-id="${orderId}"]`);
+  if (!select) return;
+  const prevStatus = select.dataset.prevStatus || 'Pending';
+  select.disabled = true;
+
+  try {
+    const res = await fetch(`/api/admin/orders/${orderId}/status`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      credentials: 'same-origin',
+      body: JSON.stringify({order_status: status})
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || data.message || 'Update failed');
+    select.dataset.prevStatus = status;
+    showToast('✅', `Order #SP-${orderId} status updated to ${status}`, 'var(--green)');
+  } catch (err) {
+    select.value = prevStatus;
+    showToast('❌', `Update failed: ${err.message}`, 'var(--red)');
+  } finally {
+    select.disabled = false;
+  }
+}
+
+function activateNav(itemId) {
+  document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
+  const activeEl = document.getElementById(itemId);
+  if (activeEl) activeEl.classList.add('active');
+}
+
+async function deleteOrder(orderId) {
+  if (!confirm(`Delete order #SP-${orderId}? This action cannot be undone.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/admin/deleteOrder/${orderId}`, {
+      method: 'DELETE',
+      credentials: 'same-origin'
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || data.message || 'Delete failed');
+
+    showToast('🗑️', `Order #SP-${orderId} deleted`, 'var(--red)');
+    await loadDashboard();
+  } catch (err) {
+    showToast('❌', `Delete failed: ${err.message}`, 'var(--red)');
+  }
+}
+
+function goToSection(sectionId, itemId) {
+  const target = document.getElementById(sectionId);
+  if (target) {
+    target.scrollIntoView({behavior: 'smooth', block: 'start'});
+  }
+  if (itemId) activateNav(itemId);
+}
+
+async function loadCustomers() {
+  const tbody = document.getElementById('customersTable');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="4" class="text-muted">Loading customers...</td></tr>';
+
+  try {
+    const res = await fetch('/api/admin/customers', {credentials: 'same-origin'});
+    const data = await res.json();
+    if (!data.success) {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-danger">${data.error || 'Unable to load customers'}</td></tr>`;
+      return;
+    }
+
+    const customers = Array.isArray(data.customers) ? data.customers : [];
+    if (!customers.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-muted">No customers found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = customers.map(c => `
+      <tr>
+        <td>${c.id}</td>
+        <td>${c.name || '-'}</td>
+        <td>${c.email || '-'}</td>
+        <td>${c.is_admin ? 'Admin' : 'Customer'}</td>
+      </tr>
+    `).join('');
+    document.getElementById('navCustomerCount').textContent = customers.length;
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-danger">Failed to load customers</td></tr>`;
+    console.error(err);
+  }
+}
+
+/* CHARTS */
+Chart.defaults.color='#7a8fa8'; Chart.defaults.borderColor='rgba(255,255,255,0.06)';
+let mainChart=null;
+const cData={labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[
+  {label:'Deliveries',data:[42,58,35,67,80,72,60],backgroundColor:'rgba(59,158,255,.15)',borderColor:'#3b9eff',borderWidth:2,borderRadius:6,fill:true,tension:.4,pointBackgroundColor:'#3b9eff',pointRadius:4},
+  {label:'Revenue (×1000)',data:[18,32,15,45,55,48,38],backgroundColor:'rgba(45,224,196,.08)',borderColor:'#2de0c4',borderWidth:2,borderRadius:6,fill:true,tension:.4,pointBackgroundColor:'#2de0c4',pointRadius:4}
+]};
+function setChart(type){
+  if(mainChart) mainChart.destroy();
+  mainChart=new Chart(document.getElementById('mainChart'),{type,data:cData,options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#7a8fa8',font:{family:'Plus Jakarta Sans',size:12}}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#7a8fa8'}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#7a8fa8'}}}}});
+}
+setChart('bar');
+let donutChart = null;
+function renderStatusChart(dash) {
+  const statusLabels = ['Pending','Packed','Shipped','Out for Delivery','Delivered','Failed'];
+  const statusValues = [
+    dash.pending_orders || 0,
+    dash.packed_orders || 0,
+    dash.shipped_orders || 0,
+    dash.out_for_delivery_orders || 0,
+    dash.delivered_orders || 0,
+    dash.failed_orders || 0,
+  ];
+  const colors = ['rgba(251,191,36,.8)','rgba(45,224,196,.8)','rgba(59,158,255,.8)','rgba(59,158,255,.5)','rgba(34,208,122,.8)','rgba(255,94,108,.8)'];
+
+  const legendEl = document.getElementById('statusLegend');
+  if (legendEl) {
+    legendEl.innerHTML = statusLabels.map((label, idx) => `
+      <div class="leg-item"><div class="leg-dot" style="background:${colors[idx]}"></div>${label}<div class="leg-val" style="color:${colors[idx]}">${statusValues[idx]}</div></div>
+    `).join('');
+  }
+
+  const chartData = {
+    labels: statusLabels,
+    datasets: [{
+      data: statusValues,
+      backgroundColor: colors,
+      borderWidth: 0,
+      borderRadius: 3,
+      spacing: 2,
+    }],
+  };
+
+  if (donutChart) {
+    donutChart.data = chartData;
+    donutChart.update();
+    return;
+  }
+
+  donutChart = new Chart(document.getElementById('donutChart'), {
+    type: 'doughnut',
+    data: chartData,
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      cutout: '70%',
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+}
+
+/* INDIA MAP */
+(function(){
+  const cv=document.getElementById('mapCanvas'), cx=cv.getContext('2d');
+  function rsz(){ cv.width=cv.parentElement.clientWidth; cv.height=400; }
+  rsz(); window.addEventListener('resize',rsz);
+
+  const india=[[.47,.02],[.52,.02],[.58,.05],[.65,.07],[.72,.06],[.79,.10],[.83,.15],[.87,.21],[.89,.28],[.90,.35],[.87,.41],[.83,.45],[.87,.51],[.89,.57],[.87,.62],[.83,.67],[.78,.73],[.72,.79],[.67,.84],[.62,.89],[.57,.93],[.55,.97],[.53,1.0],[.51,.97],[.49,.93],[.46,.89],[.42,.84],[.38,.79],[.33,.73],[.28,.67],[.23,.61],[.19,.54],[.17,.47],[.15,.40],[.14,.33],[.16,.27],[.20,.21],[.24,.16],[.29,.12],[.33,.08],[.38,.05],[.42,.03],[.47,.02]];
+  const cities=[{n:'Delhi',x:.42,y:.22,c:'#a78bfa'},{n:'Mumbai',x:.25,y:.54,c:'#3b9eff'},{n:'Bangalore',x:.39,y:.72,c:'#fbbf24'},{n:'Hyderabad',x:.47,y:.61,c:'#2de0c4'},{n:'Chennai',x:.50,y:.76,c:'#f87171'},{n:'Kolkata',x:.65,y:.41,c:'#22d07a'},{n:'Jaipur',x:.36,y:.29,c:'#fb923c'},{n:'Pune',x:.30,y:.59,c:'#60a5fa'}];
+  const drivers=[
+    {id:0,col:'#fbbf24',from:[.25,.54],to:[.30,.59],t:.42,sp:.00035,on:true},
+    {id:1,col:'#2de0c4',from:[.42,.22],to:[.36,.29],t:.68,sp:.00045,on:true},
+    {id:2,col:'#a78bfa',from:[.39,.72],to:[.47,.61],t:.28,sp:.00025,on:true},
+    {id:3,col:'#7a8fa8',x:.50,y:.76,on:false},
+    {id:4,col:'#7a8fa8',x:.65,y:.41,on:false},
+  ];
+  let sel=0, fr=0;
+  const L=(a,b,t)=>a+(b-a)*t, P=(nx,ny)=>({x:nx*cv.width,y:ny*cv.height});
+
+  function draw(){
+    cx.clearRect(0,0,cv.width,cv.height);
+    // grid
+    cx.strokeStyle='rgba(255,255,255,.015)'; cx.lineWidth=1;
+    for(let x=0;x<cv.width;x+=50){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,cv.height);cx.stroke();}
+    for(let y=0;y<cv.height;y+=50){cx.beginPath();cx.moveTo(0,y);cx.lineTo(cv.width,y);cx.stroke();}
+    // india
+    cx.beginPath(); const fp=P(india[0][0],india[0][1]); cx.moveTo(fp.x,fp.y);
+    india.slice(1).forEach(p=>{const q=P(p[0],p[1]);cx.lineTo(q.x,q.y);}); cx.closePath();
+    cx.fillStyle='rgba(59,158,255,.05)'; cx.fill();
+    cx.strokeStyle='rgba(59,158,255,.2)'; cx.lineWidth=1.5; cx.stroke();
+    // route lines
+    drivers.filter(d=>d.on).forEach(d=>{
+      const a=P(d.from[0],d.from[1]),b=P(d.to[0],d.to[1]);
+      cx.setLineDash([5,7]); cx.strokeStyle=d.id===sel?d.col+'77':d.col+'28';
+      cx.lineWidth=d.id===sel?2:1; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.stroke(); cx.setLineDash([]);
+    });
+    // destination pulse for selected
+    const sd=drivers.find(d=>d.id===sel&&d.on);
+    if(sd){ const dt=P(sd.to[0],sd.to[1]); const p=(Math.sin(fr*.08)+1)/2;
+      cx.beginPath(); cx.arc(dt.x,dt.y,6+p*5,0,Math.PI*2); cx.strokeStyle=sd.col+'55'; cx.lineWidth=1.5; cx.stroke();
+      cx.beginPath(); cx.arc(dt.x,dt.y,4,0,Math.PI*2); cx.fillStyle=sd.col+'99'; cx.fill(); }
+    // cities
+    cities.forEach(c=>{
+      const p=P(c.x,c.y);
+      const g=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,12); g.addColorStop(0,c.c+'44'); g.addColorStop(1,'transparent');
+      cx.beginPath(); cx.arc(p.x,p.y,12,0,Math.PI*2); cx.fillStyle=g; cx.fill();
+      cx.beginPath(); cx.arc(p.x,p.y,3,0,Math.PI*2); cx.fillStyle=c.c+'99'; cx.fill();
+      cx.fillStyle='rgba(122,143,168,.65)'; cx.font='9px Plus Jakarta Sans'; cx.textAlign='center'; cx.fillText(c.n,p.x,p.y-8);
+    });
+    // drivers
+    drivers.forEach(d=>{
+      let px,py; if(d.on){px=L(d.from[0],d.to[0],d.t);py=L(d.from[1],d.to[1],d.t);}else{px=d.x;py=d.y;}
+      const p=P(px,py); const is=d.id===sel;
+      if(d.on&&is){ const pu=(Math.sin(fr*.06)+1)/2;
+        const g=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,20+pu*10); g.addColorStop(0,d.col+'30'); g.addColorStop(1,'transparent');
+        cx.beginPath(); cx.arc(p.x,p.y,20+pu*10,0,Math.PI*2); cx.fillStyle=g; cx.fill(); }
+      cx.beginPath(); cx.arc(p.x,p.y,is?10:7,0,Math.PI*2); cx.strokeStyle=d.col+(is?'':'77'); cx.lineWidth=is?2:1.5; cx.stroke();
+      cx.beginPath(); cx.arc(p.x,p.y,is?7:4.5,0,Math.PI*2); cx.fillStyle=d.on?d.col:d.col+'55'; cx.fill();
+      cx.font='9px Plus Jakarta Sans'; cx.textAlign='center'; cx.textBaseline='middle';
+      cx.fillText(d.on?'🚚':'🏠',p.x,p.y-(is?18:14)); cx.textBaseline='alphabetic';
+    });
+    drivers.filter(d=>d.on).forEach(d=>{d.t+=d.sp; if(d.t>=1)d.t=0;});
+    fr++; requestAnimationFrame(draw);
+  }
+  draw();
+
+  // live updates
+  setInterval(()=>{
+    drivers.filter(d=>d.on).forEach(d=>{
+      const s=Math.round(35+Math.random()*40), id=n=>document.getElementById(n);
+      if(!id('spd'+d.id)) return;
+      id('spd'+d.id).textContent=s+' km/h';
+      const pct=Math.round(d.t*100);
+      if(id('pct'+d.id)) id('pct'+d.id).textContent=pct+'%';
+      if(id('pf'+d.id)) id('pf'+d.id).style.width=pct+'%';
+      const base=[118,89,147][d.id]||100, rem=Math.round(base*(1-d.t));
+      if(id('dst'+d.id)) id('dst'+d.id).textContent=rem+' km';
+      if(id('eta'+d.id)){ const m=Math.round(rem/s*60),h=Math.floor(m/60),mn=m%60; id('eta'+d.id).textContent=h>0?h+'h '+mn+'m':mn+'m'; }
+    });
+  },2000);
+
+  window.pickDriver=function(idx,el){ document.querySelectorAll('.driver-card').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); sel=idx; };
+})();
+
+/* AI PREDICTION */
+function estimateDeliveryTime(distance, traffic) {
+  const d = Number(distance) || 0;
+  const speed = traffic.toLowerCase() === 'high' ? 30 : traffic.toLowerCase() === 'medium' ? 40 : 50;
+  const minutes = Math.max(10, Math.round((d / speed) * 60));
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours > 0 ? hours + 'h ' : ''}${mins}m`;
+}
+
+function getTimeWindow(slot) {
+  const normalized = slot.toLowerCase();
+  if (normalized.includes('morning')) return '09:00 AM - 12:00 PM';
+  if (normalized.includes('afternoon')) return '12:00 PM - 04:00 PM';
+  if (normalized.includes('evening')) return '04:00 PM - 08:00 PM';
+  if (normalized.includes('night')) return '08:00 PM - 11:59 PM';
+  return '09:00 AM - 11:59 PM';
+}
+
+function getPriority(parcel) {
+  if (parcel === 'Express') return 'High';
+  if (parcel === 'Heavy' || parcel === 'Fragile') return 'Standard';
+  return 'Standard';
+}
+
+function getPackageWeight(parcel) {
+  if (parcel === 'Express') return 2.8;
+  if (parcel === 'Fragile') return 3.4;
+  if (parcel === 'Heavy') return 6.2;
+  return 2.0;
+}
+
+function formatPercent(value) {
+  return `${Math.round(value)}%`;
+}
+
+function renderSlotCards(slots) {
+  const list = document.getElementById('slotList');
+  if (!list) return;
+  list.innerHTML = slots.map(slot => `
+    <div class="slot-card${slot.optimal ? ' optimal' : ''}">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div>
+          <h4>${slot.slot_short}</h4>
+          <div style="font-size:12px;color:var(--muted);">${slot.time_window}</div>
+        </div>
+        <span class="slot-tag ${slot.recommendation.toLowerCase()}">${slot.recommendation}</span>
+      </div>
+      <div class="slot-line"><span>ETA</span><span>${slot.eta_readable}</span></div>
+      <div class="slot-line"><span>Confidence</span><span>${formatPercent(slot.confidence_pct)}</span></div>
+      <div class="slot-metric">Risk: ${slot.risk_score} · Score: ${slot.score}</div>
+    </div>
+  `).join('');
+}
+
+async function runPrediction(){
+  const dist=document.getElementById('ai-dist').value, trf=document.getElementById('ai-traffic').value, wth=document.getElementById('ai-weather').value, prc=document.getElementById('ai-parcel').value;
+  if(!dist||!trf||!wth||!prc){ showToast('⚠️','Please fill all 4 fields first','var(--yellow)'); return; }
+  const btn=document.getElementById('predictBtn');
+  btn.disabled=true; btn.innerHTML='<i class="fa fa-circle-notch spin"></i> AI is thinking...';
+  document.getElementById('resultEmpty').style.display='flex'; document.getElementById('resultBox').classList.remove('show');
+  try{
+    const packageWeight = getPackageWeight(prc);
+    const res=await fetch('/api/predict_slot',{
+      method:'POST',
+      credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        distance: Number(dist),
+        traffic: trf.toLowerCase(),
+        weather: wth.toLowerCase(),
+        package_weight: packageWeight,
+        order_hour: new Date().getHours(),
+        previous_customer_availability: prc === 'Express' ? 3 : 1
+      })
+    });
+    const data=await res.json();
+    if(!data.success) throw new Error(data.error || 'Prediction failed');
+
+    const slots = Array.isArray(data.slots) ? data.slots : [];
+    const bestSlot = slots.find(s => s.optimal) || slots[0] || { slot_short: data.slot_short || 'Afternoon', time_window: getTimeWindow(data.slot_short || 'Afternoon'), confidence_pct: Math.round((data.confidence || 0.75) * 100), eta_readable: estimateDeliveryTime(dist, trf) };
+    const priority = getPriority(prc);
+
+    document.getElementById('res-time').textContent = bestSlot.eta_readable || estimateDeliveryTime(dist, trf);
+    document.getElementById('res-slot').textContent = bestSlot.slot_short || data.slot_short || 'Afternoon';
+    document.getElementById('res-conf').textContent = formatPercent(bestSlot.confidence_pct || Math.round((data.confidence || 0.75) * 100));
+    document.getElementById('res-window').textContent = bestSlot.time_window || getTimeWindow(bestSlot.slot_short || data.slot_short || 'Afternoon');
+    document.getElementById('res-priority').textContent = priority;
+    document.getElementById('res-explain').innerHTML = '<strong>AI Reasoning:</strong> Generated multiple candidate slots and highlighted the optimal delivery window using traffic, weather, distance, and package weight.';
+
+    renderSlotCards(slots);
+    document.getElementById('resultEmpty').style.display='none'; document.getElementById('resultBox').classList.add('show');
+    showToast('✅','Prediction complete!','var(--green)');
+  }catch(e){ showToast('❌',`Prediction failed: ${e.message}`,'var(--red)'); }
+  btn.disabled=false; btn.innerHTML='<i class="fa fa-magic"></i> Predict Delivery Time';
+}
+
+/* TOAST */
+function showToast(icon,msg,color){
+  const w=document.getElementById('toasts'), t=document.createElement('div');
+  t.className='toast'; t.innerHTML=`<span style="font-size:16px;color:${color}">${icon}</span><span>${msg}</span>`;
+  w.appendChild(t); setTimeout(()=>t.remove(),3200);
+}
+
+/* LOGOUT */
+function logout(){ if(confirm('Are you sure you want to logout?')){ fetch('/logout',{credentials:'same-origin'}).then(()=>window.location.href='/admin-login'); } }
+</script>
+</body>
+</html>

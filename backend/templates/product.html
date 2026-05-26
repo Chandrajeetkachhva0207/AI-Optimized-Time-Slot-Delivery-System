@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS Store — Shop Everything</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --card: #1a1a25;
+    --card-hover: #20202e;
+    --accent: #6c63ff;
+    --accent2: #ff6b6b;
+    --accent3: #00d2ff;
+    --gold: #ffd700;
+    --text: #f0f0f8;
+    --muted: #8888aa;
+    --border: rgba(108,99,255,0.15);
+    --glow: 0 0 40px rgba(108,99,255,0.25);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+  /* ANIMATED BACKGROUND */
+  body::before{
+    content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+    background:
+      radial-gradient(ellipse 600px 400px at 10% 20%, rgba(108,99,255,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 400px 300px at 90% 70%, rgba(0,210,255,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 300px 300px at 50% 50%, rgba(255,107,107,0.04) 0%, transparent 70%);
+    pointer-events:none;z-index:0;
+  }
+
+  /* HEADER */
+  header{
+    position:sticky;top:0;z-index:1000;
+    background:rgba(10,10,15,0.85);
+    backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border);
+    padding:0 40px;
+    display:flex;align-items:center;justify-content:space-between;
+    height:70px;
+    animation:slideDown 0.6s ease;
+  }
+  @keyframes slideDown{from{transform:translateY(-100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+  .logo{
+    font-family:'Syne',sans-serif;font-weight:800;font-size:26px;
+    background:linear-gradient(135deg,#6c63ff,#00d2ff);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    letter-spacing:-0.5px;cursor:pointer;white-space:nowrap;
+  }
+  .logo span{color:var(--accent2);-webkit-text-fill-color:var(--accent2);}
+
+  /* SEARCH */
+  .search-wrap{
+    flex:1;max-width:480px;margin:0 30px;
+    position:relative;
+  }
+  .search-wrap input{
+    width:100%;padding:12px 50px 12px 20px;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:50px;color:var(--text);font-size:14px;
+    font-family:'DM Sans',sans-serif;
+    outline:none;transition:all 0.3s;
+  }
+  .search-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,0.15);}
+  .search-wrap input::placeholder{color:var(--muted);}
+  .search-wrap .search-icon{
+    position:absolute;right:16px;top:50%;transform:translateY(-50%);
+    color:var(--muted);font-size:15px;cursor:pointer;
+  }
+  .search-wrap input:focus + .search-icon{color:var(--accent);}
+
+  /* SEARCH DROPDOWN */
+  .search-dropdown{
+    position:absolute;top:calc(100% + 10px);left:0;right:0;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:16px;overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);
+    display:none;z-index:999;
+    animation:dropIn 0.2s ease;
+  }
+  @keyframes dropIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+  .search-dropdown.show{display:block;}
+  .sd-item{
+    display:flex;align-items:center;gap:14px;padding:12px 18px;
+    cursor:pointer;transition:background 0.2s;border-bottom:1px solid var(--border);
+  }
+  .sd-item:last-child{border-bottom:none;}
+  .sd-item:hover{background:var(--card-hover);}
+  .sd-item img{width:48px;height:48px;object-fit:cover;border-radius:10px;}
+  .sd-item-info h4{font-size:14px;font-weight:500;margin-bottom:2px;}
+  .sd-item-info span{font-size:12px;color:var(--accent);font-weight:600;}
+  .sd-empty{padding:20px;text-align:center;color:var(--muted);font-size:14px;}
+
+  /* NAV ACTIONS */
+  .nav-actions{display:flex;align-items:center;gap:12px;}
+  .nav-btn{
+    display:flex;align-items:center;gap:8px;
+    padding:9px 18px;border-radius:50px;border:none;
+    font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;
+    cursor:pointer;transition:all 0.25s;white-space:nowrap;
+  }
+  .btn-cart{
+    background:var(--accent);color:#fff;
+    position:relative;
+  }
+  .btn-cart:hover{background:#5a52e0;transform:translateY(-1px);box-shadow:var(--glow);}
+  .cart-count{
+    position:absolute;top:-6px;right:-6px;
+    background:var(--accent2);color:#fff;
+    border-radius:50%;width:20px;height:20px;
+    font-size:11px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    border:2px solid var(--bg);
+    animation:pop 0.3s ease;
+  }
+  @keyframes pop{0%{transform:scale(0);}70%{transform:scale(1.3);}100%{transform:scale(1);}}
+  .btn-wishlist{background:var(--surface);color:var(--text);border:1px solid var(--border);}
+  .btn-wishlist:hover{border-color:var(--accent2);color:var(--accent2);}
+  .btn-logout{background:transparent;color:var(--muted);border:1px solid var(--border);}
+  .btn-logout:hover{border-color:var(--accent2);color:var(--accent2);}
+
+  /* HERO BANNER */
+  .hero{
+    position:relative;z-index:1;
+    padding:60px 40px 40px;
+    text-align:center;
+    animation:fadeUp 0.8s ease 0.2s both;
+  }
+  @keyframes fadeUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+  .hero-tag{
+    display:inline-block;
+    background:rgba(108,99,255,0.15);border:1px solid rgba(108,99,255,0.3);
+    color:var(--accent);font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+    padding:6px 18px;border-radius:50px;margin-bottom:20px;
+  }
+  .hero h1{
+    font-family:'Syne',sans-serif;font-size:clamp(36px,5vw,64px);font-weight:800;
+    line-height:1.1;margin-bottom:16px;
+    background:linear-gradient(135deg,#fff 0%,#a8a5ff 50%,#00d2ff 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .hero p{color:var(--muted);font-size:16px;max-width:500px;margin:0 auto 30px;}
+  .hero-stats{
+    display:flex;justify-content:center;gap:50px;flex-wrap:wrap;
+    padding:24px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+    margin-top:10px;
+  }
+  .stat{text-align:center;}
+  .stat-num{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;
+    background:linear-gradient(135deg,var(--accent),var(--accent3));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .stat-label{font-size:12px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:4px;}
+
+  /* FILTER BAR */
+  .filter-bar{
+    position:relative;z-index:1;
+    display:flex;align-items:center;gap:12px;
+    padding:20px 40px;flex-wrap:wrap;
+    animation:fadeUp 0.8s ease 0.4s both;
+  }
+  .filter-label{font-size:13px;color:var(--muted);margin-right:4px;}
+  .filter-btn{
+    padding:8px 20px;border-radius:50px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);font-size:13px;
+    cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;
+  }
+  .filter-btn.active,.filter-btn:hover{
+    background:var(--accent);border-color:var(--accent);color:#fff;
+  }
+  .sort-select{
+    margin-left:auto;background:var(--surface);border:1px solid var(--border);
+    color:var(--text);padding:8px 16px;border-radius:50px;font-size:13px;
+    font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;
+  }
+
+  /* PRODUCT GRID */
+  .main{position:relative;z-index:1;padding:0 40px 80px;}
+  .section-title{
+    font-family:'Syne',sans-serif;font-size:22px;font-weight:700;
+    margin-bottom:24px;display:flex;align-items:center;gap:12px;
+  }
+  .section-title::after{
+    content:'';flex:1;height:1px;background:var(--border);
+  }
+  .product-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+    gap:24px;
+  }
+
+  /* PRODUCT CARD */
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:20px;
+    overflow:hidden;transition:all 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
+    animation:cardIn 0.5s ease both;cursor:default;
+    position:relative;
+  }
+  @keyframes cardIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+  .card:hover{
+    transform:translateY(-8px);
+    border-color:rgba(108,99,255,0.4);
+    box-shadow:0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(108,99,255,0.2);
+    background:var(--card-hover);
+  }
+  .card-badge{
+    position:absolute;top:14px;left:14px;z-index:2;
+    background:var(--accent2);color:#fff;
+    font-size:11px;font-weight:700;letter-spacing:1px;
+    padding:4px 10px;border-radius:50px;text-transform:uppercase;
+  }
+  .card-badge.new{background:var(--accent3);color:#0a0a0f;}
+  .card-badge.sale{background:var(--accent2);}
+  .card-wish{
+    position:absolute;top:14px;right:14px;z-index:2;
+    width:34px;height:34px;border-radius:50%;
+    background:rgba(10,10,15,0.6);backdrop-filter:blur(10px);
+    border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:all 0.2s;color:var(--muted);font-size:14px;
+  }
+  .card-wish:hover,.card-wish.active{color:var(--accent2);border-color:var(--accent2);}
+  .card-img-wrap{
+    height:200px;overflow:hidden;background:#0d0d15;
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;position:relative;
+  }
+  .card-img-wrap::after{
+    content:'';position:absolute;bottom:0;left:0;right:0;height:40px;
+    background:linear-gradient(transparent,var(--card));
+    pointer-events:none;
+  }
+  .card-img-wrap img{
+    max-width:100%;max-height:100%;object-fit:contain;
+    transition:transform 0.5s ease;filter:drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+  }
+  .card:hover .card-img-wrap img{transform:scale(1.08);}
+  .card-body{padding:18px;}
+  .card-cat{font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:6px;}
+  .card-name{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:8px;line-height:1.3;}
+  .card-rating{display:flex;align-items:center;gap:6px;margin-bottom:12px;}
+  .stars{color:var(--gold);font-size:12px;letter-spacing:1px;}
+  .rating-count{font-size:12px;color:var(--muted);}
+  .card-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .card-price{
+    font-family:'Syne',sans-serif;font-size:22px;font-weight:800;
+    background:linear-gradient(135deg,#fff,#a8a5ff);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .card-price-old{font-size:13px;color:var(--muted);text-decoration:line-through;margin-left:6px;}
+  .add-btn{
+    display:flex;align-items:center;gap:8px;
+    padding:10px 18px;border-radius:50px;border:none;
+    background:var(--accent);color:#fff;
+    font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
+    cursor:pointer;transition:all 0.25s;white-space:nowrap;
+  }
+  .add-btn:hover{background:#5a52e0;transform:scale(1.04);box-shadow:0 8px 20px rgba(108,99,255,0.4);}
+  .add-btn:active{transform:scale(0.97);}
+  .add-btn.added{background:#16a085;animation:pop 0.3s ease;}
+
+  /* ========== CART PANEL ========== */
+  .cart-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(4px);z-index:2000;
+    opacity:0;pointer-events:none;transition:opacity 0.3s;
+  }
+  .cart-overlay.open{opacity:1;pointer-events:all;}
+  .cart-panel{
+    position:fixed;top:0;right:0;height:100%;width:420px;max-width:100%;
+    background:var(--surface);border-left:1px solid var(--border);
+    z-index:2001;display:flex;flex-direction:column;
+    transform:translateX(100%);transition:transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+  }
+  .cart-panel.open{transform:translateX(0);}
+  .cart-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:24px;border-bottom:1px solid var(--border);
+  }
+  .cart-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;}
+  .cart-close{
+    width:36px;height:36px;border-radius:50%;background:var(--card);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    color:var(--muted);font-size:16px;transition:all 0.2s;
+  }
+  .cart-close:hover{color:var(--text);border-color:var(--accent);}
+  .cart-items{flex:1;overflow-y:auto;padding:20px;}
+  .cart-items::-webkit-scrollbar{width:4px;}
+  .cart-items::-webkit-scrollbar-track{background:transparent;}
+  .cart-items::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+  .cart-empty{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    height:100%;color:var(--muted);gap:16px;text-align:center;
+  }
+  .cart-empty i{font-size:52px;opacity:0.3;}
+  .cart-empty p{font-size:16px;}
+  .cart-item{
+    display:flex;align-items:center;gap:14px;
+    padding:14px;background:var(--card);border-radius:14px;
+    border:1px solid var(--border);margin-bottom:12px;
+    animation:cardIn 0.3s ease;
+  }
+  .cart-item img{width:60px;height:60px;object-fit:contain;border-radius:10px;background:#0d0d15;padding:4px;}
+  .ci-info{flex:1;}
+  .ci-name{font-size:14px;font-weight:600;margin-bottom:4px;}
+  .ci-price{font-size:14px;color:var(--accent);font-weight:700;}
+  .ci-qty{display:flex;align-items:center;gap:10px;margin-top:8px;}
+  .qty-btn{
+    width:26px;height:26px;border-radius:50%;background:var(--surface);border:1px solid var(--border);
+    color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;
+    transition:all 0.2s;
+  }
+  .qty-btn:hover{background:var(--accent);border-color:var(--accent);}
+  .qty-num{font-size:14px;font-weight:600;min-width:20px;text-align:center;}
+  .ci-remove{color:var(--muted);cursor:pointer;font-size:14px;transition:color 0.2s;padding:4px;}
+  .ci-remove:hover{color:var(--accent2);}
+  .cart-footer{padding:20px 24px;border-top:1px solid var(--border);}
+  .cart-total-row{display:flex;justify-content:space-between;margin-bottom:8px;}
+  .cart-total-row.main-total{
+    font-family:'Syne',sans-serif;font-size:20px;font-weight:800;
+    margin-bottom:18px;
+    background:linear-gradient(135deg,#fff,#a8a5ff);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .cart-total-row .sub-label{font-size:13px;color:var(--muted);}
+  .checkout-btn{
+    width:100%;padding:16px;border-radius:50px;border:none;
+    background:linear-gradient(135deg,var(--accent),var(--accent3));
+    color:#fff;font-family:'Syne',sans-serif;font-size:16px;font-weight:700;
+    cursor:pointer;transition:all 0.3s;letter-spacing:0.5px;
+  }
+  .checkout-btn:hover{transform:translateY(-2px);box-shadow:0 15px 40px rgba(108,99,255,0.4);}
+  .cart-note{font-size:12px;color:var(--muted);text-align:center;margin-top:12px;}
+
+  /* TOAST */
+  .toast-wrap{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:3000;display:flex;flex-direction:column;gap:10px;align-items:center;}
+  .toast{
+    background:var(--surface);border:1px solid var(--border);
+    padding:12px 24px;border-radius:50px;font-size:14px;font-weight:500;
+    box-shadow:0 10px 40px rgba(0,0,0,0.5);
+    display:flex;align-items:center;gap:10px;
+    animation:toastIn 0.3s ease, toastOut 0.3s ease 2.5s both;
+  }
+  @keyframes toastIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes toastOut{to{opacity:0;transform:translateY(20px);}}
+  .toast i{color:var(--accent);}
+
+  /* NO RESULTS */
+  .no-results{
+    grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);
+  }
+  .no-results i{font-size:48px;margin-bottom:16px;opacity:0.3;display:block;}
+
+  /* RESPONSIVE */
+  @media(max-width:768px){
+    header{padding:0 16px;}
+    .search-wrap{max-width:200px;margin:0 10px;}
+    .hero{padding:40px 16px 24px;}
+    .filter-bar{padding:16px;}
+    .main{padding:0 16px 60px;}
+    .hero-stats{gap:30px;}
+    .cart-panel{width:100%;}
+    .nav-btn span{display:none;}
+    .btn-logout,.btn-wishlist{display:none;}
+  }
+  @media(max-width:480px){
+    .search-wrap{display:none;}
+    .logo{font-size:20px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">NEX<span>US</span> <span style="font-size:14px;opacity:0.6;">STORE</span></div>
+
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="Search products, brands..." autocomplete="off" oninput="handleSearch(this.value)">
+    <i class="fa fa-search search-icon" onclick="handleSearch(document.getElementById('searchInput').value)"></i>
+    <div class="search-dropdown" id="searchDropdown"></div>
+  </div>
+
+  <div class="nav-actions">
+    <button class="nav-btn btn-wishlist" onclick="showToast('Wishlist coming soon!','fa-heart')">
+      <i class="fa fa-heart"></i> <span>Wishlist</span>
+    </button>
+    <button class="nav-btn btn-cart" onclick="openCart()">
+      <i class="fa fa-bag-shopping"></i> <span>Cart</span>
+      <span class="cart-count" id="cartCount">0</span>
+    </button>
+    <button class="nav-btn btn-logout" onclick="showToast('Logged out. Redirecting...','fa-right-from-bracket')">
+      <i class="fa fa-right-from-bracket"></i>
+    </button>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-tag">✦ Shop Everything — One Place</div>
+  <h1>Fashion, Furniture,<br>Electronics & More</h1>
+  <p>India's premium multi-category store. Clothes, shoes, furniture, gadgets — all in one place.</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">8K+</div><div class="stat-label">Products</div></div>
+    <div class="stat"><div class="stat-num">98%</div><div class="stat-label">Satisfaction</div></div>
+    <div class="stat"><div class="stat-num">3.5M</div><div class="stat-label">Customers</div></div>
+    <div class="stat"><div class="stat-num">48h</div><div class="stat-label">Delivery</div></div>
+  </div>
+</section>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <span class="filter-label">Category:</span>
+  <button class="filter-btn active" onclick="filterProducts('all',this)">🛍️ All</button>
+  <button class="filter-btn" onclick="filterProducts('clothing',this)">👕 Clothing</button>
+  <button class="filter-btn" onclick="filterProducts('shoes',this)">👟 Shoes</button>
+  <button class="filter-btn" onclick="filterProducts('furniture',this)">🛋️ Furniture</button>
+  <button class="filter-btn" onclick="filterProducts('electronics',this)">📱 Electronics</button>
+  <button class="filter-btn" onclick="filterProducts('audio',this)">🎧 Audio</button>
+  <button class="filter-btn" onclick="filterProducts('wearable',this)">⌚ Wearables</button>
+  <button class="filter-btn" onclick="filterProducts('gaming',this)">🎮 Gaming</button>
+  <button class="filter-btn" onclick="filterProducts('beauty',this)">💄 Beauty</button>
+  <button class="filter-btn" onclick="filterProducts('sports',this)">⚽ Sports</button>
+  <select class="sort-select" id="sortSelect" onchange="sortProducts(this.value)">
+    <option value="default">Sort: Featured</option>
+    <option value="price-asc">Price: Low → High</option>
+    <option value="price-desc">Price: High → Low</option>
+    <option value="rating">Top Rated</option>
+    <option value="name">Name A–Z</option>
+  </select>
+</div>
+
+<!-- PRODUCTS -->
+<main class="main">
+  <div class="section-title" id="gridTitle">All Products</div>
+  <div class="product-grid" id="productGrid"></div>
+</main>
+
+<!-- CART OVERLAY & PANEL -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="cart-panel" id="cartPanel">
+  <div class="cart-header">
+    <div class="cart-title">🛒 Your Cart</div>
+    <div class="cart-close" onclick="closeCart()"><i class="fa fa-xmark"></i></div>
+  </div>
+  <div class="cart-items" id="cartItems">
+    <div class="cart-empty">
+      <i class="fa fa-bag-shopping"></i>
+      <p>Your cart is empty.<br>Add some awesome products!</p>
+    </div>
+  </div>
+  <div class="cart-footer" id="cartFooter" style="display:none;">
+    <div class="cart-total-row"><span class="sub-label">Subtotal</span><span id="cartSubtotal">₹0</span></div>
+    <div class="cart-total-row"><span class="sub-label">Shipping</span><span style="color:#16a085;">FREE</span></div>
+    <div class="cart-total-row"><span class="sub-label">Tax (5%)</span><span id="cartTax">₹0</span></div>
+    <div class="cart-total-row main-total"><span>Total</span><span id="cartTotal">₹0</span></div>
+    <button class="checkout-btn" onclick="checkout()"><i class="fa fa-bolt"></i> Checkout Now</button>
+    <div class="cart-note"><i class="fa fa-lock"></i> Secure checkout · Free returns · 2-year warranty</div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ===== PRODUCT DATA =====
+const PRODUCTS = [
+  // CLOTHING
+  { id:1,  name:"Men's Classic White Linen Shirt", cat:'clothing', price:1299, oldPrice:1999, rating:4.5, reviews:3210, badge:'Sale', image:'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400&fit=crop' },
+  { id:2,  name:"Women's Floral Maxi Dress", cat:'clothing', price:1899, oldPrice:2799, rating:4.7, reviews:2140, badge:'Hot', image:'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=400&fit=crop' },
+  { id:3,  name:"Men's Slim Fit Denim Jeans", cat:'clothing', price:1599, oldPrice:2499, rating:4.6, reviews:5670, badge:'', image:'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&fit=crop' },
+  { id:4,  name:"Women's Oversized Hoodie", cat:'clothing', price:1199, oldPrice:1699, rating:4.8, reviews:4320, badge:'New', image:'https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=400&fit=crop' },
+  { id:5,  name:"Men's Formal Blazer — Charcoal", cat:'clothing', price:3499, oldPrice:4999, rating:4.7, reviews:980, badge:'Sale', image:'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400&fit=crop' },
+  { id:6,  name:"Women's Crop Top — Pastel Pink", cat:'clothing', price:699, oldPrice:999, rating:4.4, reviews:2870, badge:'', image:'https://images.unsplash.com/photo-1583744946564-b52ac1c389c8?w=400&fit=crop' },
+
+  // SHOES
+  { id:7,  name:'Nike Air Max 270 — White', cat:'shoes', price:8999, oldPrice:10995, rating:4.8, reviews:6750, badge:'Hot', image:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&fit=crop' },
+  { id:8,  name:'Adidas Ultraboost 23', cat:'shoes', price:9999, oldPrice:12999, rating:4.9, reviews:4321, badge:'New', image:'https://images.unsplash.com/photo-1608231387042-66d1773d3028?w=400&fit=crop' },
+  { id:9,  name:"Women's Block Heel Sandals", cat:'shoes', price:1499, oldPrice:2199, rating:4.5, reviews:1890, badge:'Sale', image:'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400&fit=crop' },
+  { id:10, name:"Men's Chelsea Leather Boots", cat:'shoes', price:3999, oldPrice:5499, rating:4.7, reviews:1230, badge:'', image:'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=400&fit=crop' },
+  { id:11, name:'Puma RS-X Sneakers — Black', cat:'shoes', price:6499, oldPrice:7999, rating:4.6, reviews:3200, badge:'Sale', image:'https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?w=400&fit=crop' },
+  { id:12, name:"Women's Running Shoes — Coral", cat:'shoes', price:2999, oldPrice:3999, rating:4.5, reviews:2100, badge:'New', image:'https://images.unsplash.com/photo-1539185441755-769473a23570?w=400&fit=crop' },
+
+  // FURNITURE
+  { id:13, name:'Scandinavian Wooden Sofa 3-Seater', cat:'furniture', price:34999, oldPrice:44999, rating:4.7, reviews:890, badge:'Sale', image:'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&fit=crop' },
+  { id:14, name:'Ergonomic Office Chair — Black', cat:'furniture', price:12999, oldPrice:17999, rating:4.8, reviews:2340, badge:'Hot', image:'https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400&fit=crop' },
+  { id:15, name:'Minimalist Study Desk — Oak', cat:'furniture', price:8999, oldPrice:11999, rating:4.6, reviews:1120, badge:'', image:'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=400&fit=crop' },
+  { id:16, name:'King Size Bed Frame — Walnut', cat:'furniture', price:24999, oldPrice:32999, rating:4.9, reviews:670, badge:'New', image:'https://images.unsplash.com/photo-1505693314120-0d443867891c?w=400&fit=crop' },
+  { id:17, name:'Floating Wall Shelves — Set of 3', cat:'furniture', price:2499, oldPrice:3499, rating:4.5, reviews:3450, badge:'Sale', image:'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&fit=crop' },
+  { id:18, name:'Recliner Sofa Chair — Brown', cat:'furniture', price:18999, oldPrice:24999, rating:4.7, reviews:560, badge:'', image:'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=400&fit=crop' },
+
+  // ELECTRONICS
+  { id:19, name:'iPhone 15 Pro Max — 256GB', cat:'electronics', price:134900, oldPrice:149900, rating:4.9, reviews:2841, badge:'Hot', image:'https://images.unsplash.com/photo-1696446701796-da61339901d0?w=400&fit=crop' },
+  { id:20, name:'Samsung 65" QLED 4K Smart TV', cat:'electronics', price:89999, oldPrice:109999, rating:4.8, reviews:1560, badge:'Sale', image:'https://images.unsplash.com/photo-1593359677879-a4bb92f4834c?w=400&fit=crop' },
+  { id:21, name:'MacBook Pro 16" M3 Max', cat:'electronics', price:249900, oldPrice:279900, rating:4.9, reviews:1456, badge:'New', image:'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&fit=crop' },
+  { id:22, name:'Canon EOS R6 Mark II Camera', cat:'electronics', price:229990, oldPrice:259990, rating:4.8, reviews:734, badge:'', image:'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&fit=crop' },
+  { id:23, name:'Samsung Galaxy S24 Ultra', cat:'electronics', price:124999, oldPrice:139999, rating:4.8, reviews:1923, badge:'Sale', image:'https://images.unsplash.com/photo-1610945264803-c22b62d2a7b3?w=400&fit=crop' },
+  { id:24, name:'Dyson V15 Detect Vacuum', cat:'electronics', price:54990, oldPrice:64990, rating:4.7, reviews:2100, badge:'Hot', image:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&fit=crop' },
+
+  // AUDIO
+  { id:25, name:'Sony WH-1000XM5 Headphones', cat:'audio', price:29990, oldPrice:34990, rating:4.8, reviews:5672, badge:'Sale', image:'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&fit=crop' },
+  { id:26, name:'AirPods Pro 2nd Gen', cat:'audio', price:24900, oldPrice:27900, rating:4.8, reviews:8934, badge:'Hot', image:'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400&fit=crop' },
+  { id:27, name:'JBL Charge 5 Bluetooth Speaker', cat:'audio', price:13999, oldPrice:17999, rating:4.7, reviews:4210, badge:'', image:'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&fit=crop' },
+  { id:28, name:'Bose QuietComfort Earbuds II', cat:'audio', price:21990, oldPrice:26990, rating:4.7, reviews:3100, badge:'New', image:'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&fit=crop' },
+
+  // WEARABLES
+  { id:29, name:'Apple Watch Ultra 2', cat:'wearable', price:89900, oldPrice:99900, rating:4.7, reviews:892, badge:'New', image:'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&fit=crop' },
+  { id:30, name:'Samsung Galaxy Watch 6 Classic', cat:'wearable', price:34999, oldPrice:42999, rating:4.6, reviews:1450, badge:'Sale', image:'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&fit=crop' },
+  { id:31, name:'Fitbit Charge 6 Fitness Band', cat:'wearable', price:14999, oldPrice:19999, rating:4.5, reviews:3200, badge:'', image:'https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?w=400&fit=crop' },
+
+  // GAMING
+  { id:32, name:'PlayStation 5 Pro Console', cat:'gaming', price:62990, oldPrice:69990, rating:4.9, reviews:3421, badge:'Hot', image:'https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=400&fit=crop' },
+  { id:33, name:'Xbox Series X — 1TB', cat:'gaming', price:49990, oldPrice:54990, rating:4.8, reviews:2876, badge:'Sale', image:'https://images.unsplash.com/photo-1621259182978-fbf93132d53d?w=400&fit=crop' },
+  { id:34, name:'Razer DeathAdder V3 Gaming Mouse', cat:'gaming', price:7999, oldPrice:9999, rating:4.8, reviews:5430, badge:'', image:'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&fit=crop' },
+  { id:35, name:'ASUS ROG Swift 27" 4K Monitor', cat:'gaming', price:59999, oldPrice:74999, rating:4.7, reviews:1230, badge:'New', image:'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400&fit=crop' },
+
+  // BEAUTY
+  { id:36, name:"L'Oréal Revitalift Anti-Aging Cream", cat:'beauty', price:899, oldPrice:1299, rating:4.6, reviews:8900, badge:'Sale', image:'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400&fit=crop' },
+  { id:37, name:'MAC Studio Fix Foundation', cat:'beauty', price:2099, oldPrice:2699, rating:4.7, reviews:5670, badge:'Hot', image:'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400&fit=crop' },
+  { id:38, name:'Dyson Airwrap Styler Complete', cat:'beauty', price:44900, oldPrice:49900, rating:4.8, reviews:3210, badge:'New', image:'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=400&fit=crop' },
+  { id:39, name:'Mamaearth Vitamin C Face Wash', cat:'beauty', price:299, oldPrice:399, rating:4.5, reviews:12400, badge:'', image:'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400&fit=crop' },
+
+  // SPORTS
+  { id:40, name:'Yonex Badminton Racket — Arcsaber', cat:'sports', price:4999, oldPrice:6999, rating:4.8, reviews:2310, badge:'Hot', image:'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=400&fit=crop' },
+  { id:41, name:'Nivia Karma Football — Size 5', cat:'sports', price:799, oldPrice:1199, rating:4.6, reviews:4560, badge:'Sale', image:'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=400&fit=crop' },
+  { id:42, name:'Yoga Mat with Alignment Lines', cat:'sports', price:1299, oldPrice:1799, rating:4.7, reviews:6780, badge:'New', image:'https://images.unsplash.com/photo-1601925228138-7da3c04ef1f0?w=400&fit=crop' },
+  { id:43, name:'Protein Shaker Bottle — 700ml', cat:'sports', price:399, oldPrice:599, rating:4.5, reviews:9870, badge:'', image:'https://images.unsplash.com/photo-1594737625785-a6cbdabd333c?w=400&fit=crop' },
+];
+
+// ===== STATE =====
+let cart = JSON.parse(localStorage.getItem('cart')) || {};
+let currentFilter = 'all';
+let currentSort = 'default';
+let wishlist = new Set();
+
+// ===== RENDER STARS =====
+function stars(rating) {
+  let s = '';
+  const full = Math.floor(rating);
+  const half = rating % 1 >= 0.5;
+  for(let i=0;i<full;i++) s += '<i class="fa fa-star"></i>';
+  if(half) s += '<i class="fa fa-star-half-stroke"></i>';
+  for(let i=0;i<5-full-(half?1:0);i++) s += '<i class="fa fa-regular fa-star"></i>';
+  return s;
+}
+
+// ===== RENDER PRODUCTS =====
+function renderProducts(products) {
+  const grid = document.getElementById('productGrid');
+  if(!products.length) {
+    grid.innerHTML = `<div class="no-results"><i class="fa fa-magnifying-glass"></i><p>No products found.<br>Try a different search.</p></div>`;
+    return;
+  }
+  grid.innerHTML = products.map((p,i) => `
+    <div class="card" style="animation-delay:${i*0.05}s">
+      ${p.badge ? `<div class="card-badge ${p.badge==='New'?'new':''}">${p.badge}</div>` : ''}
+      <div class="card-wish ${wishlist.has(p.id)?'active':''}" onclick="toggleWish(${p.id},this)" title="Wishlist">
+        <i class="fa${wishlist.has(p.id)?'':'-regular'} fa-heart"></i>
+      </div>
+      <div class="card-img-wrap">
+        <img src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400'">
+      </div>
+      <div class="card-body">
+        <div class="card-cat">${CAT_LABELS[p.cat]||p.cat}</div>
+        <div class="card-name">${p.name}</div>
+        <div class="card-rating">
+          <div class="stars">${stars(p.rating)}</div>
+          <span class="rating-count">${p.rating} (${p.reviews.toLocaleString()})</span>
+        </div>
+        <div class="card-footer">
+          <div>
+            <span class="card-price">₹${p.price.toLocaleString()}</span>
+            ${p.oldPrice ? `<span class="card-price-old">₹${p.oldPrice.toLocaleString()}</span>` : ''}
+          </div>
+          <button class="add-btn" id="btn-${p.id}" onclick="addToCart(${p.id})">
+            <i class="fa fa-plus"></i> Add
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===== CATEGORY LABELS =====
+const CAT_LABELS = {
+  all:'All Products', clothing:'Clothing', shoes:'Shoes',
+  furniture:'Furniture', electronics:'Electronics', audio:'Audio',
+  wearable:'Wearables', gaming:'Gaming', beauty:'Beauty', sports:'Sports'
+};
+
+// ===== FILTER =====
+function filterProducts(cat, el) {
+  currentFilter = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  applyFiltersAndSort();
+  document.getElementById('gridTitle').textContent = (CAT_LABELS[cat]||cat) + ` (${getFiltered().length})`;
+}
+
+function getFiltered() {
+  return PRODUCTS.filter(p => currentFilter === 'all' || p.cat === currentFilter);
+}
+
+function applyFiltersAndSort() {
+  let products = getFiltered();
+  const sort = document.getElementById('sortSelect').value;
+  if(sort==='price-asc') products = [...products].sort((a,b)=>a.price-b.price);
+  else if(sort==='price-desc') products = [...products].sort((a,b)=>b.price-a.price);
+  else if(sort==='rating') products = [...products].sort((a,b)=>b.rating-a.rating);
+  else if(sort==='name') products = [...products].sort((a,b)=>a.name.localeCompare(b.name));
+  renderProducts(products);
+}
+
+function sortProducts(val) {
+  applyFiltersAndSort();
+}
+
+// ===== SEARCH =====
+let searchTimeout;
+function handleSearch(val) {
+  clearTimeout(searchTimeout);
+  const dd = document.getElementById('searchDropdown');
+  if(!val.trim()) { dd.classList.remove('show'); return; }
+  searchTimeout = setTimeout(() => {
+    const q = val.toLowerCase();
+    const found = PRODUCTS.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      p.cat.toLowerCase().includes(q) ||
+      (CAT_LABELS[p.cat]||'').toLowerCase().includes(q)
+    );
+    if(!found.length) {
+      dd.innerHTML = `<div class="sd-empty"><i class="fa fa-magnifying-glass"></i> No results for "${val}"</div>`;
+    } else {
+      dd.innerHTML = found.slice(0,6).map(p => `
+        <div class="sd-item" onclick="scrollToProduct(${p.id})">
+          <img src="${p.image}" alt="${p.name}" onerror="this.src='https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400'">
+          <div class="sd-item-info">
+            <h4>${highlight(p.name,val)}</h4>
+            <span>₹${p.price.toLocaleString()}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+    dd.classList.add('show');
+  }, 200);
+}
+
+function highlight(text, q) {
+  const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+  return text.replace(re, '<mark style="background:rgba(108,99,255,0.3);color:#a8a5ff;border-radius:3px;padding:0 2px;">$1</mark>');
+}
+
+function scrollToProduct(id) {
+  // filter to show all, then scroll
+  currentFilter = 'all';
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.filter-btn').classList.add('active');
+  applyFiltersAndSort();
+  document.getElementById('searchDropdown').classList.remove('show');
+  document.getElementById('searchInput').value = '';
+  setTimeout(() => {
+    const btn = document.getElementById(`btn-${id}`);
+    if(btn) {
+      btn.closest('.card').scrollIntoView({behavior:'smooth', block:'center'});
+      btn.closest('.card').style.border = '1px solid var(--accent)';
+      btn.closest('.card').style.boxShadow = 'var(--glow)';
+      setTimeout(()=>{
+        btn.closest('.card').style.border = '1px solid var(--border)';
+        btn.closest('.card').style.boxShadow = '';
+      }, 2000);
+    }
+  }, 100);
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', e => {
+  if(!e.target.closest('.search-wrap')) {
+    document.getElementById('searchDropdown').classList.remove('show');
+  }
+});
+
+// ===== WISHLIST =====
+function toggleWish(id, el) {
+  if (wishlist.has(id)) {
+    wishlist.delete(id);
+    el.innerHTML = '<i class="fa-regular fa-heart"></i>';
+    el.classList.remove('active');
+    showToast('Removed from wishlist', 'fa-heart-crack');
+  } else {
+    wishlist.add(id);
+    el.innerHTML = '<i class="fa fa-heart"></i>';
+    el.classList.add('active');
+    showToast('Added to wishlist! ❤️', 'fa-heart');
+  }
+
+  // 👉 SAVE DATA
+  localStorage.setItem("wishlist", JSON.stringify([...wishlist]));
+}
+
+// ===== CART =====
+
+function addToCart(id) {
+  const p = PRODUCTS.find(x => x.id === id);
+  if(!p) return;
+
+  if(cart[id]) {
+    cart[id].qty++;
+  } else {
+    cart[id] = { ...p, qty: 1 };
+  }
+
+  // ✅ IMPORTANT LINE
+  localStorage.setItem('cart', JSON.stringify(cart));
+
+  updateCartCount();
+  showToast(`${p.name} added to cart! 🛒`, 'fa-cart-plus');
+  openCart();
+}
+
+  // Button feedback
+  const btn = document.getElementById(`btn-${id}`);
+  if(btn) {
+    btn.classList.add('added');
+    btn.innerHTML = '<i class="fa fa-check"></i> Added';
+    setTimeout(() => {
+      btn.classList.remove('added');
+      btn.innerHTML = '<i class="fa fa-plus"></i> Add';
+    }, 1500);
+  }
+
+function removeFromCart(id) {
+  delete cart[id];
+
+  // ✅ ADD THIS
+  localStorage.setItem('cart', JSON.stringify(cart));
+
+  updateCartCount();
+  renderCart();
+}
+
+function changeQty(id, delta) {
+  if(!cart[id]) return;
+  cart[id].qty += delta;
+  if(cart[id].qty <= 0) { removeFromCart(id); 
+    return;
+   }
+   localStorage.setItem('cart', JSON.stringify(cart));
+  renderCart();
+  updateCartCount();
+}
+
+function updateCartCount() {
+  let count = 0;
+  Object.values(cart).forEach(item => {
+    count += item.qty;
+  });
+  document.getElementById("cartCount").innerText = count;
+}
+
+function openCart() {
+  window.location.href = "cart";
+}
+
+function closeCart() {
+  document.getElementById('cartOverlay').classList.remove('open');
+  document.getElementById('cartPanel').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function renderCart() {
+  const items = Object.values(cart);
+  const itemsEl = document.getElementById('cartItems');
+  const footerEl = document.getElementById('cartFooter');
+
+  if(!items.length) {
+    itemsEl.innerHTML = `<div class="cart-empty"><i class="fa fa-bag-shopping"></i><p>Your cart is empty.<br>Add some awesome products!</p></div>`;
+    footerEl.style.display = 'none';
+    return;
+  }
+
+  footerEl.style.display = 'block';
+  itemsEl.innerHTML = items.map(item => `
+    <div class="cart-item">
+      <img src="${item.image}" alt="${item.name}" onerror="this.src='https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400'">
+      <div class="ci-info">
+        <div class="ci-name">${item.name}</div>
+        <div class="ci-price">₹${item.price.toLocaleString()}</div>
+        <div class="ci-qty">
+          <div class="qty-btn" onclick="changeQty(${item.id},-1)"><i class="fa fa-minus"></i></div>
+          <div class="qty-num">${item.qty}</div>
+          <div class="qty-btn" onclick="changeQty(${item.id},1)"><i class="fa fa-plus"></i></div>
+        </div>
+      </div>
+      <div class="ci-remove" onclick="removeFromCart(${item.id})" title="Remove"><i class="fa fa-trash"></i></div>
+    </div>
+  `).join('');
+
+  const subtotal = items.reduce((s,i)=>s+(i.price*i.qty),0);
+  const tax = Math.round(subtotal * 0.05);
+  const total = subtotal + tax;
+  document.getElementById('cartSubtotal').textContent = '₹'+subtotal.toLocaleString();
+  document.getElementById('cartTax').textContent = '₹'+tax.toLocaleString();
+  document.getElementById('cartTotal').textContent = '₹'+total.toLocaleString();
+}
+
+function checkout() {
+  if(!Object.keys(cart).length) return;
+  showToast('🎉 Order placed successfully! Thank you!','fa-check-circle');
+  cart = {};
+  updateCartCount();
+  renderCart();
+  closeCart();
+}
+
+// ===== TOAST =====
+function showToast(msg, icon='fa-circle-check') {
+  const wrap = document.getElementById('toastWrap');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `<i class="fa ${icon}"></i> ${msg}`;
+  wrap.appendChild(toast);
+  setTimeout(()=>toast.remove(), 2800);
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  applyFiltersAndSort();
+  document.getElementById('gridTitle').textContent = `All Products (${PRODUCTS.length})`;
+
+  // ✅ LOAD CART FROM STORAGE
+  const savedCart = localStorage.getItem('cart');
+  if(savedCart) {
+    cart = JSON.parse(savedCart);
+    updateCartCount();
+  }
+});
+</script>
+</body>
+</html>

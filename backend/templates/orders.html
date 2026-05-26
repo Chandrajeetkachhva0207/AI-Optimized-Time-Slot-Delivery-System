@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Orders | SmartParcel AI</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+body{background:#f4f6fb;font-family:'Segoe UI',sans-serif;}
+.navbar{background:#0f3460;}
+.navbar-brand{font-weight:bold;color:white;}
+
+.order-card{
+  background:white;
+  border-radius:12px;
+  padding:20px;
+  margin-bottom:16px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
+
+.success-box{
+  background:linear-gradient(135deg,#e8f5e9,#c8e6c9);
+  border:1px solid #4CAF50;
+  padding:20px;
+  border-radius:12px;
+  margin-bottom:24px;
+  text-align:center;
+}
+
+.success-box .fa-check-circle{
+  font-size:48px;
+  color:#4CAF50;
+}
+</style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-dark">
+  <div class="container">
+    <a class="navbar-brand text-white" href="/">🚚 SmartParcel AI</a>
+    <div>
+      <a class="text-white text-decoration-none me-3" href="/dashboard">Dashboard</a>
+      <a class="text-white text-decoration-none me-3" href="/cart">Cart</a>
+      <a class="text-white text-decoration-none" href="/logout">Logout</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-4">
+
+  <h3 class="mb-4">📦 My Orders</h3>
+
+  <div id="successBanner"></div>
+
+  <div id="ordersList">
+    <p class="text-muted">Loading orders...</p>
+  </div>
+
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5>Order Details</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="orderDetails"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+function getStatusBadge(status){
+  const map = {
+    "Pending": "warning",
+    "Packed": "primary",
+    "Shipped": "orange",
+    "Delivered": "success",
+    "Cancelled": "danger"
+  };
+
+  let color = map[status] || "secondary";
+
+  if(color === "orange"){
+    return `<span class="badge" style="background:orange">${status}</span>`;
+  }
+
+  return `<span class="badge bg-${color}">${status}</span>`;
+}
+
+async function loadOrders(){
+  try {
+    const r = await fetch('/api/orders', { credentials: 'same-origin' });
+    const d = await r.json();
+
+    const el = document.getElementById('ordersList');
+
+    if (!d.success) {
+      el.innerHTML = '<p class="text-danger">' + (d.error || 'Error loading orders') + '</p>';
+      return;
+    }
+
+    const orders = d.orders || [];
+
+    if (orders.length === 0) {
+      el.innerHTML = '<p class="text-muted">No orders yet. <a href="/dashboard">Browse products</a></p>';
+      return;
+    }
+
+    el.innerHTML = orders.map(o => `
+      <div class="order-card">
+
+        <div class="d-flex justify-content-between align-items-center">
+          <strong>Order #${o.id}</strong>
+          <span>₹${(o.price||0).toLocaleString()}</span>
+        </div>
+
+        <div class="mt-2">
+          ${getStatusBadge(o.order_status || 'Pending')}
+        </div>
+
+        <p class="text-muted mb-1 mt-2">${o.product_name || 'Products'}</p>
+
+        <small>
+          ${o.predicted_slot ? '📅 ' + o.predicted_slot : ''} · 
+          ${o.created_at ? new Date(o.created_at).toLocaleString() : ''}
+        </small>
+
+        <div class="mt-3 d-flex gap-2">
+
+          <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${o.id})">
+            View Details
+          </button>
+
+          ${
+            (o.order_status !== 'Delivered' && o.order_status !== 'Cancelled')
+            ? `<a class="btn btn-sm btn-success" href="/track/${o.id}"><i class="fa fa-location-dot"></i> Track Live</a>`
+            : ''
+          }
+
+          ${
+            (o.order_status !== 'Delivered' && o.order_status !== 'Shipped' && o.order_status !== 'Cancelled')
+            ? `<button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(${o.id})">Cancel</button>`
+            : ''
+          }
+
+        </div>
+
+      </div>
+    `).join('');
+
+  } catch(e) {
+    document.getElementById('ordersList').innerHTML = '<p class="text-danger">Error loading orders</p>';
+  }
+}
+
+// Initial load on page ready
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(location.search);
+  const placed = params.get('placed');
+  const slot = params.get('slot');
+
+  if (placed) {
+    document.getElementById('successBanner').innerHTML = `
+      <div class="success-box">
+        <i class="fa fa-check-circle"></i>
+        <h5 class="mt-2">Order #${placed} Placed Successfully!</h5>
+        <p class="mb-0">AI Predicted Delivery: ${slot ? decodeURIComponent(slot) : 'Processing...'}</p>
+        <a href="/dashboard" class="btn btn-success mt-2">Continue Shopping</a>
+      </div>
+    `;
+  }
+  
+  loadOrders();
+  // Poll for updates every 15 seconds
+  setInterval(loadOrders, 15000);
+});
+
+async function viewDetails(id){
+
+  const r = await fetch(`/api/orders/${id}`, { credentials:'same-origin' });
+  const d = await r.json();
+
+  if(!d.success){
+    alert("Error loading order");
+    return;
+  }
+
+  const o = d.order;
+
+  document.getElementById('orderDetails').innerHTML = `
+    <p><strong>Order ID:</strong> ${o.id}</p>
+    <p><strong>Products:</strong> ${o.product_name}</p>
+    <p><strong>Price:</strong> ₹${o.price}</p>
+    <p><strong>Status:</strong> ${o.order_status}</p>
+    <p><strong>Delivery Slot:</strong> ${o.predicted_slot}</p>
+  `;
+
+  new bootstrap.Modal(document.getElementById('orderModal')).show();
+}
+
+async function cancelOrder(id){
+
+  if(!confirm("Cancel this order?")) return;
+
+  const r = await fetch(`/api/orders/${id}/cancel`, {
+    method:'PUT',
+    credentials:'same-origin'
+  });
+
+  const d = await r.json();
+
+  if(d.success){
+    alert("Order cancelled");
+    location.reload();
+  }else{
+    alert(d.error || "Error");
+  }
+}
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

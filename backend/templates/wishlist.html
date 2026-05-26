@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wishlist</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+body{
+  font-family: Arial;
+  background:#f5f7fb;
+  margin:0;
+}
+
+/* Header */
+header{
+  background:#111;
+  color:white;
+  padding:15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+h1{
+  margin:0;
+}
+
+/* Container */
+.container{
+  padding:20px;
+}
+
+/* Wishlist Item */
+.item{
+  background:white;
+  padding:15px;
+  margin-bottom:10px;
+  border-radius:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+.item h3{
+  margin:0;
+}
+
+.actions button{
+  margin-left:10px;
+  padding:6px 10px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+.btn-cart{
+  background:#28a745;
+  color:white;
+}
+
+.btn-remove{
+  background:#dc3545;
+  color:white;
+}
+
+/* Empty */
+.empty{
+  text-align:center;
+  margin-top:50px;
+  color:gray;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>💖 Wishlist</h1>
+  <button onclick="goHome()">🏠 Home</button>
+</header>
+
+<div class="container" id="wishlistContainer"></div>
+
+<script>
+const KEY = "wishlist";
+const CART_KEY = "cart";
+
+/* Load Wishlist */
+function loadWishlist(){
+  return JSON.parse(localStorage.getItem(KEY)) || {};
+}
+
+/* Save Wishlist */
+function saveWishlist(data){
+  localStorage.setItem(KEY, JSON.stringify(data));
+}
+
+/* Load Cart */
+function loadCart(){
+  return JSON.parse(localStorage.getItem(CART_KEY)) || {};
+}
+
+/* Save Cart */
+function saveCart(data){
+  localStorage.setItem(CART_KEY, JSON.stringify(data));
+}
+
+/* Render Wishlist */
+function renderWishlist(){
+  const wishlist = loadWishlist();
+  const container = document.getElementById("wishlistContainer");
+
+  if(Object.keys(wishlist).length === 0){
+    container.innerHTML = "<div class='empty'>No items in wishlist 💔</div>";
+    return;
+  }
+
+  let html = "";
+  Object.values(wishlist).forEach(item => {
+    html += `
+      <div class="item">
+        <h3>${item.name} - ₹${item.price}</h3>
+        <div class="actions">
+          <button class="btn-cart" onclick="moveToCart(${item.id})">
+            <i class="fa fa-cart-plus"></i>
+          </button>
+          <button class="btn-remove" onclick="removeItem(${item.id})">
+            <i class="fa fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+/* Remove Item */
+function removeItem(id){
+  let wishlist = loadWishlist();
+  delete wishlist[id];
+  saveWishlist(wishlist);
+  renderWishlist();
+}
+
+/* Move to Cart */
+function moveToCart(id){
+  let wishlist = loadWishlist();
+  let cart = loadCart();
+
+  const item = wishlist[id];
+  if(!item) return;
+
+  if(cart[id]){
+    cart[id].qty++;
+  } else {
+    cart[id] = {...item, qty:1};
+  }
+
+  delete wishlist[id];
+
+  saveCart(cart);
+  saveWishlist(wishlist);
+
+  alert("Moved to cart 🛒");
+  renderWishlist();
+}
+
+/* Navigation */
+function goHome(){
+  window.location.href = "dashboard.html";
+}
+
+/* Init */
+renderWishlist();
+</script>
+
+</body>
+</html>

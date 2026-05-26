@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Time Slot Delivery — Admin Hub</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0c1020; --panel: #141a2e; --border: rgba(255,255,255,.08);
+      --text: #e8ebf4; --muted: #8b93a8; --accent: #6366f1; --accent2: #22d3ee;
+      --ok: #22c55e; --warn: #f59e0b; --bad: #ef4444; --sidebar: 260px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+    .sidebar {
+      width: var(--sidebar); background: var(--panel); border-right: 1px solid var(--border);
+      position: fixed; inset: 0 auto 0 0; padding: 24px 16px; display: flex; flex-direction: column; z-index: 100;
+    }
+    .logo { font-weight: 800; font-size: 1.1rem; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+    .logo span { color: var(--accent2); }
+    .nav-sub { font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 20px 8px 8px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: var(--muted);
+      cursor: pointer; font-size: 14px; transition: .2s; border: 1px solid transparent;
+    }
+    .nav-item:hover { background: rgba(99,102,241,.12); color: var(--text); }
+    .nav-item.active { background: rgba(99,102,241,.2); color: #fff; border-color: rgba(99,102,241,.35); }
+    .sidebar-foot { margin-top: auto; font-size: 12px; color: var(--muted); padding: 12px; }
+    .main { margin-left: var(--sidebar); flex: 1; min-height: 100vh; }
+    .topbar {
+      height: 56px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; position: sticky; top: 0; background: rgba(12,16,32,.92); backdrop-filter: blur(12px); z-index: 50;
+    }
+    .search-wrap { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px; width: min(360px, 40vw); }
+    .search-wrap input { background: none; border: none; color: var(--text); width: 100%; outline: none; font-size: 13px; }
+    .tb-actions { display: flex; align-items: center; gap: 12px; }
+    .icon-btn { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .icon-btn:hover { color: var(--text); border-color: rgba(99,102,241,.4); }
+    .content { padding: 24px; max-width: 1400px; }
+    .section { display: none; animation: fade .25s ease; }
+    .section.visible { display: block; }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 6px; }
+    .hint { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    @media (max-width: 1100px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+    .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px;
+      transition: transform .2s, box-shadow .2s, border-color .2s;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,.35); border-color: rgba(99,102,241,.25); }
+    .card .k { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+    .card .v { font-size: 1.65rem; font-weight: 800; margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
+    .card.c1 .v { color: var(--accent2); }
+    .card.c2 .v { color: var(--ok); }
+    .card.c3 .v { color: #a78bfa; }
+    .card.c4 .v { color: var(--bad); }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+    .panel h3 { font-size: 14px; margin-bottom: 14px; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 10px 12px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); }
+    td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,.04); }
+    tr:hover td { background: rgba(255,255,255,.02); }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .b-pending { background: rgba(245,158,11,.15); color: var(--warn); }
+    .b-ok { background: rgba(34,197,94,.15); color: var(--ok); }
+    .b-bad { background: rgba(239,68,68,.15); color: var(--bad); }
+    .btn { padding: 8px 16px; border-radius: 10px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit; }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff; }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn:hover { opacity: .92; }
+    .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; align-items: flex-end; }
+    .filters label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 4px; }
+    .filters input, .filters select { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 8px; font-size: 13px; }
+    .chart-box { height: 260px; position: relative; }
+    .ai-box { background: rgba(99,102,241,.08); border: 1px solid rgba(99,102,241,.2); border-radius: 12px; padding: 16px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: var(--muted); }
+    .ai-box strong { color: var(--text); }
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--panel); border: 1px solid var(--border); padding: 12px 18px; border-radius: 12px; font-size: 13px; z-index: 9999; box-shadow: 0 12px 40px rgba(0,0,0,.5); }
+    input, textarea, select { font-family: inherit; }
+    .form-row { margin-bottom: 12px; }
+    .form-row label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .form-row input, .form-row textarea, .form-row select { width: 100%; max-width: 400px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">⚡ <span>AI Delivery</span> Hub</div>
+    <div style="font-size:12px;color:var(--muted);padding:0 8px 16px">Time slot intelligence</div>
+    <div class="nav-sub">Menu</div>
+    <div class="nav-item active" data-section="dashboard"><span>📊</span> Dashboard</div>
+    <div class="nav-item" data-section="orders"><span>📦</span> Orders</div>
+    <div class="nav-item" data-section="slots"><span>🕐</span> Time Slots</div>
+    <div class="nav-item" data-section="agents"><span>🚴</span> Agents</div>
+    <div class="nav-item" data-section="routes"><span>🗺️</span> Routes</div>
+    <div class="nav-item" data-section="analytics"><span>📈</span> Analytics</div>
+    <div class="nav-item" data-section="customers"><span>👥</span> Customers</div>
+    <div class="nav-item" data-section="settings"><span>⚙️</span> Settings</div>
+    <div class="sidebar-foot">
+      <a href="/admin-dashboard" style="color:var(--accent2)">Classic dashboard</a><br />
+      <a href="/logout" style="color:var(--muted);margin-top:8px;display:inline-block">Logout</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="search-wrap">
+        <span style="opacity:.5">🔍</span>
+        <input type="search" id="global-search" placeholder="Quick filter current table…" />
+      </div>
+      <div class="tb-actions">
+        <button class="icon-btn" title="Notifications" onclick="toast('No new notifications')">🔔</button>
+        <button class="icon-btn" title="Export CSV" onclick="exportCsv()">⬇️</button>
+        <span style="font-size:13px;color:var(--muted)">Admin</span>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- DASHBOARD -->
+      <section id="section-dashboard" class="section visible">
+        <h1>Dashboard</h1>
+        <p class="hint">Real-time KPIs from SQLite + AI demand insights.</p>
+        <div class="cards">
+          <div class="card c1"><div class="k">Total orders</div><div class="v" id="k-orders">—</div></div>
+          <div class="card c2"><div class="k">Active deliveries</div><div class="v" id="k-active">—</div></div>
+          <div class="card c3"><div class="k">Time slot usage</div><div class="v" id="k-slot">—</div></div>
+          <div class="card c4"><div class="k">Failed deliveries</div><div class="v" id="k-failed">—</div></div>
+        </div>
+        <div class="grid2">
+          <div class="panel"><h3>Orders (last 7 days)</h3><div class="chart-box"><canvas id="chartOrders"></canvas></div></div>
+          <div class="panel"><h3>Predicted demand by hour (ML)</h3><div class="chart-box"><canvas id="chartDemand"></canvas></div></div>
+        </div>
+        <div class="panel">
+          <h3>AI insights</h3>
+          <div class="ai-box" id="ai-insights">Loading…</div>
+        </div>
+      </section>
+
+      <!-- ORDERS -->
+      <section id="section-orders" class="section">
+        <h1>Orders</h1>
+        <p class="hint">Filter by date, status, slot. Updates via REST API.</p>
+        <div class="filters">
+          <div><label>From</label><input type="date" id="f-date-from" /></div>
+          <div><label>To</label><input type="date" id="f-date-to" /></div>
+          <div><label>Status</label>
+            <select id="f-status"><option value="">All</option><option>Pending</option><option>Packed</option><option>Shipped</option><option>Out for Delivery</option><option>Delivered</option><option>Failed</option></select>
+          </div>
+          <div><label>Slot contains</label><input type="text" id="f-slot" placeholder="e.g. 09:00" /></div>
+          <button class="btn btn-primary" onclick="loadOrders()">Apply</button>
+          <button class="btn btn-ghost" onclick="openOrderModal()">+ New order</button>
+        </div>
+        <div class="panel" style="overflow-x:auto">
+          <table><thead><tr><th>ID</th><th>Customer</th><th>Address</th><th>Slot</th><th>Status</th><th>Agent</th><th>Actions</th></tr></thead><tbody id="tbody-orders"></tbody></table>
+        </div>
+      </section>
+
+      <!-- TIME SLOTS -->
+      <section id="section-slots" class="section">
+        <h1>Time slots</h1>
+        <p class="hint">Capacity vs booked — edit via API.</p>
+        <div class="panel" style="overflow-x:auto">
+          <table><thead><tr><th>Slot</th><th>Capacity</th><th>Booked</th><th>Utilization</th><th>Actions</th></tr></thead><tbody id="tbody-slots"></tbody></table>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <h3>AI: least busy slot</h3>
+          <button class="btn btn-primary" onclick="loadRecommendSlot()">Get recommendation</button>
+          <div class="ai-box" id="slot-recommend" style="display:none"></div>
+        </div>
+      </section>
+
+      <!-- AGENTS -->
+      <section id="section-agents" class="section">
+        <h1>Agents</h1>
+        <p class="hint">Delivery personnel — status and assigned order counts.</p>
+        <button class="btn btn-primary" style="margin-bottom:14px" onclick="openAgentModal()">+ Add agent</button>
+        <div class="panel" style="overflow-x:auto">
+          <table><thead><tr><th>ID</th><th>Name</th><th>Status</th><th>Location</th><th>Orders</th><th>Actions</th></tr></thead><tbody id="tbody-agents"></tbody></table>
+        </div>
+      </section>
+
+      <!-- ROUTES -->
+      <section id="section-routes" class="section">
+        <h1>Route optimization</h1>
+        <p class="hint">Nearest-neighbor TSP-style ordering (Haversine distance).</p>
+        <div class="panel">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Default depot: Mumbai. POST /api/delivery/ai/optimize-route</p>
+          <div class="filters" style="align-items:flex-end; gap:12px; margin-bottom:16px;">
+            <div style="flex:1; min-width:220px;">
+              <label>Source (lat,lon or city)</label>
+              <input id="route-source" type="text" placeholder="Mumbai or 19.076,72.8777" />
+            </div>
+            <div style="flex:1; min-width:220px;">
+              <label>Destination (lat,lon or city)</label>
+              <input id="route-destination" type="text" placeholder="Pune or 18.5204,73.8567" />
+            </div>
+            <button class="btn btn-primary" onclick="optimizeRoute()" style="height:40px;">Optimize Route</button>
+            <button class="btn btn-ghost" onclick="runRouteDemo()" style="height:40px;">Run demo optimization</button>
+          </div>
+          <pre id="route-out" style="margin-top:16px;padding:14px;background:var(--bg);border-radius:10px;font-size:12px;overflow:auto;max-height:280px;color:var(--muted)"></pre>
+        </div>
+      </section>
+
+      <!-- ANALYTICS -->
+      <section id="section-analytics" class="section">
+        <h1>Analytics</h1>
+        <p class="hint">Same charts as dashboard + export.</p>
+        <div class="grid2">
+          <div class="panel"><h3>Orders trend</h3><div class="chart-box"><canvas id="chartOrders2"></canvas></div></div>
+          <div class="panel"><h3>Demand curve</h3><div class="chart-box"><canvas id="chartDemand2"></canvas></div></div>
+        </div>
+      </section>
+
+      <!-- CUSTOMERS -->
+      <section id="section-customers" class="section">
+        <h1>Customers</h1>
+        <p class="hint">Registered users (non-admin).</p>
+        <div class="panel" style="overflow-x:auto">
+          <table><thead><tr><th>ID</th><th>Name</th><th>Email</th></tr></thead><tbody id="tbody-customers"></tbody></table>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="section-settings" class="section">
+        <h1>Settings</h1>
+        <p class="hint">API base: <strong>/api/delivery</strong></p>
+        <div class="panel">
+          <ul style="font-size:14px;line-height:2;color:var(--muted)">
+            <li><code>GET/POST /api/delivery/orders</code> · <code>PATCH /api/delivery/orders/&lt;id&gt;</code></li>
+            <li><code>GET/POST /api/delivery/agents</code> · <code>PATCH /api/delivery/agents/&lt;id&gt;</code></li>
+            <li><code>GET /api/delivery/timeslots</code> · <code>PATCH /api/delivery/timeslots/&lt;id&gt;</code></li>
+            <li><code>GET /api/delivery/analytics</code></li>
+            <li><code>GET /api/delivery/ai/recommend-slot</code> · <code>GET /api/delivery/ai/demand</code></li>
+            <li><code>POST /api/delivery/ai/optimize-route</code></li>
+            <li><code>GET /api/delivery/export/orders</code> (CSV)</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Modal order -->
+  <dialog id="dlg-order" style="border:none;border-radius:16px;padding:24px;max-width:480px;background:var(--panel);color:var(--text)">
+    <h3 style="margin-bottom:14px">New delivery order</h3>
+    <div class="form-row"><label>Customer</label><input id="m-cust" /></div>
+    <div class="form-row"><label>Address</label><textarea id="m-addr" rows="3"></textarea></div>
+    <div class="form-row"><label>Time slot ID (optional)</label><input type="number" id="m-tsid" placeholder="1-5" /></div>
+    <div class="form-row"><label>Status</label><select id="m-st"><option>Pending</option><option>Packed</option></select></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-primary" onclick="submitOrder()">Create</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('dlg-order').close()">Cancel</button>
+    </div>
+  </dialog>
+
+  <dialog id="dlg-agent" style="border:none;border-radius:16px;padding:24px;max-width:400px;background:var(--panel);color:var(--text)">
+    <h3 style="margin-bottom:14px">New agent</h3>
+    <div class="form-row"><label>Name</label><input id="a-name" /></div>
+    <div class="form-row"><label>Status</label><select id="a-st"><option>available</option><option>busy</option><option>offline</option></select></div>
+    <div class="form-row"><label>Location (lat,lon)</label><input id="a-loc" placeholder="19.076,72.877" /></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-primary" onclick="submitAgent()">Save</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('dlg-agent').close()">Cancel</button>
+    </div>
+  </dialog>
+
+  <script>
+    const API = '/api/delivery';
+    let chartOrdersInst = null, chartDemandInst = null;
+    let chartOrders2Inst = null, chartDemand2Inst = null;
+
+    function toast(msg) {
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3200);
+    }
+
+    async function api(path, opts = {}) {
+      const r = await fetch(API + path, { credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, ...opts });
+      const data = await r.json().catch(() => ({}));
+      if (r.status === 403) { window.location = '/admin-login'; throw new Error('auth'); }
+      return data;
+    }
+
+    // Navigation
+    document.querySelectorAll('.nav-item').forEach(el => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+        el.classList.add('active');
+        const sec = el.dataset.section;
+        document.querySelectorAll('.section').forEach(s => s.classList.toggle('visible', s.id === 'section-' + sec));
+        if (sec === 'orders') loadOrders();
+        if (sec === 'slots') loadSlots();
+        if (sec === 'agents') loadAgents();
+        if (sec === 'customers') loadCustomers();
+        if (sec === 'analytics') loadAnalyticsSectionCharts();
+      });
+    });
+
+    async function loadDashboard() {
+      const d = await api('/analytics');
+      if (!d.success) return;
+      const s = d.summary;
+      document.getElementById('k-orders').textContent = s.total_orders;
+      document.getElementById('k-active').textContent = s.active_deliveries;
+      document.getElementById('k-slot').textContent = s.time_slot_usage_pct + '%';
+      document.getElementById('k-failed').textContent = s.failed_deliveries;
+
+      const peaks = (d.ai && d.ai.peak_hours) ? d.ai.peak_hours.join(', ') : '—';
+      document.getElementById('ai-insights').innerHTML =
+        '<strong>Peak hours (predicted):</strong> ' + peaks + '<br/>' +
+        (d.ai.demand_note ? '<em>' + d.ai.demand_note + '</em>' : '');
+
+      const labels = d.charts.orders_last_7_days.labels;
+      const vals = d.charts.orders_last_7_days.values;
+      const dem = d.charts.demand_by_hour || [];
+
+      if (chartOrdersInst) chartOrdersInst.destroy();
+      chartOrdersInst = new Chart(document.getElementById('chartOrders'), {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Orders', data: vals, backgroundColor: 'rgba(99,102,241,.4)', borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#8b93a8' } }, y: { ticks: { color: '#8b93a8' }, beginAtZero: true } } }
+      });
+
+      const hLabels = dem.map(x => x.hour + ':00');
+      const hData = dem.map(x => x.predicted);
+      if (chartDemandInst) chartDemandInst.destroy();
+      chartDemandInst = new Chart(document.getElementById('chartDemand'), {
+        type: 'line',
+        data: { labels: hLabels, datasets: [{ label: 'Demand', data: hData, borderColor: '#22d3ee', backgroundColor: 'rgba(34,211,238,.15)', fill: true, tension: 0.35 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#8b93a8' } }, y: { ticks: { color: '#8b93a8' }, beginAtZero: true } } }
+      });
+    }
+
+    async function loadAnalyticsSectionCharts() {
+      const d = await api('/analytics');
+      if (!d.success) return;
+      const labels = d.charts.orders_last_7_days.labels;
+      const vals = d.charts.orders_last_7_days.values;
+      const dem = d.charts.demand_by_hour || [];
+      const hLabels = dem.map(x => x.hour + ':00');
+      const hData = dem.map(x => x.predicted);
+      if (chartOrders2Inst) chartOrders2Inst.destroy();
+      if (chartDemand2Inst) chartDemand2Inst.destroy();
+      chartOrders2Inst = new Chart(document.getElementById('chartOrders2'), {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Orders', data: vals, backgroundColor: 'rgba(99,102,241,.4)', borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#8b93a8' } }, y: { ticks: { color: '#8b93a8' }, beginAtZero: true } } }
+      });
+      chartDemand2Inst = new Chart(document.getElementById('chartDemand2'), {
+        type: 'line',
+        data: { labels: hLabels, datasets: [{ label: 'Demand', data: hData, borderColor: '#22d3ee', backgroundColor: 'rgba(34,211,238,.15)', fill: true, tension: 0.35 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#8b93a8' } }, y: { ticks: { color: '#8b93a8' }, beginAtZero: true } } }
+      });
+    }
+
+    async function loadOrders() {
+      const p = new URLSearchParams();
+      const df = document.getElementById('f-date-from')?.value;
+      const dt = document.getElementById('f-date-to')?.value;
+      const st = document.getElementById('f-status')?.value;
+      const sl = document.getElementById('f-slot')?.value;
+      if (df) p.set('date_from', df);
+      if (dt) p.set('date_to', dt);
+      if (st) p.set('status', st);
+      if (sl) p.set('slot', sl);
+      const d = await api('/orders?' + p.toString());
+      const tb = document.getElementById('tbody-orders');
+      tb.innerHTML = (d.orders || []).map(o => {
+        const bs = o.status === 'Failed' ? 'b-bad' : (o.status === 'Delivered' ? 'b-ok' : 'b-pending');
+        return `<tr>
+          <td>#${o.id}</td><td>${esc(o.customer)}</td><td>${esc(o.address)}</td><td>${esc(o.slot || '—')}</td>
+          <td><span class="badge ${bs}">${esc(o.status)}</span></td><td>${esc(o.agent_name || '—')}</td>
+          <td><button type="button" class="btn btn-ghost btn-cycle-status" style="padding:4px 8px;font-size:12px" data-id="${o.id}" data-status="${esc(o.status)}">Cycle status</button></td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="7">No orders</td></tr>';
+    }
+
+    const statusCycle = ['Pending','Packed','Shipped','Out for Delivery','Delivered','Failed'];
+    document.getElementById('tbody-orders').addEventListener('click', async (e) => {
+      const btn = e.target.closest('.btn-cycle-status');
+      if (!btn) return;
+      const id = parseInt(btn.dataset.id, 10);
+      const cur = btn.dataset.status || 'Pending';
+      const i = statusCycle.indexOf(cur);
+      const next = statusCycle[(i + 1) % statusCycle.length];
+      await api('/orders/' + id, { method: 'PATCH', body: JSON.stringify({ status: next }) });
+      toast('Updated → ' + next);
+      loadOrders();
+      loadDashboard();
+    });
+
+    function esc(s) { return String(s || '').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+
+    async function loadSlots() {
+      const d = await api('/timeslots');
+      const tb = document.getElementById('tbody-slots');
+      tb.innerHTML = (d.timeslots || []).map(s => `<tr>
+        <td>${esc(s.slot)}</td><td>${s.capacity}</td><td>${s.booked}</td><td>${s.utilization_pct}%</td>
+        <td><button class="btn btn-ghost" style="padding:4px 8px" onclick="editSlot(${s.id},${s.capacity},${s.booked})">Edit</button></td>
+      </tr>`).join('');
+    }
+
+    async function editSlot(id, cap, book) {
+      const nc = prompt('New capacity', cap);
+      if (nc == null) return;
+      await api('/timeslots/' + id, { method: 'PATCH', body: JSON.stringify({ capacity: parseInt(nc, 10) }) });
+      toast('Slot updated');
+      loadSlots();
+      loadDashboard();
+    }
+
+    async function loadRecommendSlot() {
+      const d = await api('/ai/recommend-slot');
+      const el = document.getElementById('slot-recommend');
+      el.style.display = 'block';
+      if (d.recommended) {
+        el.innerHTML = '<strong>Recommended:</strong> ' + esc(d.recommended.slot) +
+          ' — utilization ' + d.recommended.utilization_pct + '% — remaining ' + (d.recommended.capacity - d.recommended.booked);
+      } else {
+        el.textContent = 'No slots';
+      }
+    }
+
+    async function loadAgents() {
+      const d = await api('/agents');
+      const tb = document.getElementById('tbody-agents');
+      tb.innerHTML = (d.agents || []).map(a => `<tr>
+        <td>${a.id}</td><td>${esc(a.name)}</td><td>${esc(a.status)}</td><td>${esc(a.location)}</td><td>${a.assigned_orders}</td>
+        <td><button type="button" class="btn btn-ghost btn-toggle-agent" style="padding:4px 8px" data-id="${a.id}" data-status="${esc(a.status)}">Toggle</button></td>
+      </tr>`).join('');
+    }
+
+    document.getElementById('tbody-agents').addEventListener('click', async (e) => {
+      const btn = e.target.closest('.btn-toggle-agent');
+      if (!btn) return;
+      const id = parseInt(btn.dataset.id, 10);
+      const st = btn.dataset.status || 'available';
+      const next = st === 'available' ? 'busy' : 'available';
+      await api('/agents/' + id, { method: 'PATCH', body: JSON.stringify({ status: next }) });
+      loadAgents();
+    });
+
+    async function loadCustomers() {
+      const d = await api('/customers');
+      const tb = document.getElementById('tbody-customers');
+      tb.innerHTML = (d.customers || []).map(c => `<tr><td>${c.id}</td><td>${esc(c.name)}</td><td>${esc(c.email)}</td></tr>`).join('');
+    }
+
+    function openOrderModal() { document.getElementById('dlg-order').showModal(); }
+    async function submitOrder() {
+      const body = {
+        customer: document.getElementById('m-cust').value,
+        address: document.getElementById('m-addr').value,
+        timeslot_id: parseInt(document.getElementById('m-tsid').value, 10) || undefined,
+        status: document.getElementById('m-st').value
+      };
+      if (!body.customer || !body.address) { toast('Fill customer & address'); return; }
+      await api('/orders', { method: 'POST', body: JSON.stringify(body) });
+      document.getElementById('dlg-order').close();
+      toast('Order created');
+      loadOrders();
+      loadDashboard();
+      loadSlots();
+    }
+
+    function openAgentModal() { document.getElementById('dlg-agent').showModal(); }
+    async function submitAgent() {
+      await api('/agents', { method: 'POST', body: JSON.stringify({
+        name: document.getElementById('a-name').value,
+        status: document.getElementById('a-st').value,
+        location: document.getElementById('a-loc').value
+      })});
+      document.getElementById('dlg-agent').close();
+      toast('Agent added');
+      loadAgents();
+    }
+
+    function formatRouteOutput(data) {
+      const lines = [];
+      if (data.success !== false) {
+        lines.push(`Depot: ${data.depot.lat}, ${data.depot.lon}`);
+        const routeStops = Array.isArray(data.ordered_stops) && data.ordered_stops.length ? data.ordered_stops : (Array.isArray(data.stops) ? data.stops : []);
+        if (routeStops.length) {
+          const route = routeStops.map((stop, index) => stop.label || stop.id || `Stop ${index + 1}`).join(' → ');
+          lines.push(`Shortest path: ${route}`);
+        }
+        if (typeof data.total_km === 'number') {
+          lines.push(`Total distance: ${data.total_km.toFixed(2)} km`);
+        }
+        if (data.estimated_time) {
+          lines.push(`Estimated delivery time: ${data.estimated_time}`);
+        }
+        if (Array.isArray(data.legs) && data.legs.length) {
+          lines.push('');
+          lines.push('Leg details:');
+          data.legs.forEach((leg, idx) => {
+            lines.push(`  ${idx + 1}. ${leg.km.toFixed(2)} km from [${leg.from[0].toFixed(4)}, ${leg.from[1].toFixed(4)}] to [${leg.to[0].toFixed(4)}, ${leg.to[1].toFixed(4)}]`);
+          });
+        }
+      } else {
+        lines.push(`Error: ${data.error || 'Unable to optimize route.'}`);
+      }
+      return lines.join('\n');
+    }
+
+    async function optimizeRoute() {
+      const output = document.getElementById('route-out');
+      const source = document.getElementById('route-source')?.value.trim();
+      const destination = document.getElementById('route-destination')?.value.trim();
+      if (!source || !destination) {
+        toast('Enter both source and destination coordinates');
+        return;
+      }
+      output.textContent = 'Optimizing route…';
+      try {
+        const r = await fetch(API + '/ai/optimize-route', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source, destination })
+        });
+        const d = await r.json();
+        if (!d.success) throw new Error(d.error || 'Route optimization failed');
+        output.textContent = formatRouteOutput(d);
+      } catch (err) {
+        output.textContent = `Error: ${err.message}`;
+      }
+    }
+
+    async function runRouteDemo() {
+      const output = document.getElementById('route-out');
+      output.textContent = 'Running demo optimization…';
+      try {
+        const body = {
+          depot: { lat: 19.076, lon: 72.8777 },
+          stops: [
+            { id: 1, lat: 19.05, lon: 72.85, label: 'A' },
+            { id: 2, lat: 19.12, lon: 72.90, label: 'B' },
+            { id: 3, lat: 19.02, lon: 72.82, label: 'C' }
+          ]
+        };
+        const r = await fetch(API + '/ai/optimize-route', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const d = await r.json();
+        if (!d.success) throw new Error(d.error || 'Demo optimization failed');
+        output.textContent = formatRouteOutput(d);
+      } catch (err) {
+        output.textContent = `Error: ${err.message}`;
+      }
+    }
+
+    function exportCsv() { window.open(API + '/export/orders', '_blank'); }
+
+    document.getElementById('global-search').addEventListener('input', function() {
+      const q = this.value.toLowerCase();
+      const vis = document.querySelector('.section.visible');
+      if (!vis) return;
+      vis.querySelectorAll('tbody tr').forEach(tr => {
+        tr.style.display = tr.innerText.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+
+    loadDashboard();
+  </script>
+</body>
+</html>

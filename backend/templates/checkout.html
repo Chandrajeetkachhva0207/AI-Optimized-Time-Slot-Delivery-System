@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout | NEXUS Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#13131a; --card:#1a1a25; --card-hover:#20202e;
+  --accent:#6c63ff; --accent2:#ff6b6b; --accent3:#00d2ff;
+  --gold:#ffd700; --text:#f0f0f8; --muted:#8888aa;
+  --border:rgba(108,99,255,0.15); --border2:rgba(255,255,255,0.06);
+  --glow:0 0 40px rgba(108,99,255,0.25);
+  --green:#00c896; --green-dim:rgba(0,200,150,0.12);
+  --radius:16px; --radius-lg:24px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* AMBIENT BG */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 700px 500px at 5% 10%,rgba(108,99,255,0.07) 0%,transparent 70%),
+    radial-gradient(ellipse 500px 400px at 90% 70%,rgba(0,210,255,0.05) 0%,transparent 70%),
+    radial-gradient(ellipse 300px 300px at 50% 50%,rgba(108,99,255,0.03) 0%,transparent 70%);
+}
+
+/* HEADER */
+header{
+  position:sticky;top:0;z-index:200;
+  background:rgba(10,10,15,0.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+  height:68px;padding:0 48px;
+  display:flex;align-items:center;justify-content:space-between;
+  animation:slideDown 0.5s ease;
+}
+@keyframes slideDown{from{transform:translateY(-100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;
+  background:linear-gradient(135deg,#6c63ff,#00d2ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  text-decoration:none;letter-spacing:-0.5px;}
+.logo em{font-style:normal;-webkit-text-fill-color:#ff6b6b;}
+.header-center{display:flex;align-items:center;gap:0;}
+.step-pill{
+  display:flex;align-items:center;gap:10px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:50px;padding:6px 20px;
+}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;transition:all 0.3s;}
+.step-dot.done{background:var(--green);color:#0a0a0f;}
+.step-dot.active{background:var(--accent);color:#fff;box-shadow:0 0 16px rgba(108,99,255,0.5);}
+.step-dot.pending{background:var(--surface);border:1px solid var(--border);color:var(--muted);}
+.step-sep{width:32px;height:1px;background:var(--border);}
+.step-label{font-size:12px;color:var(--muted);}
+.step-label.active{color:var(--text);font-weight:600;}
+.nav-acts{display:flex;align-items:center;gap:10px;}
+.nav-pill{
+  display:flex;align-items:center;gap:7px;padding:8px 18px;border-radius:50px;
+  font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;
+  background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'DM Sans',sans-serif;
+  text-decoration:none;
+}
+.nav-pill:hover{border-color:var(--accent);color:var(--accent);}
+.nav-pill.danger:hover{border-color:var(--accent2);color:var(--accent2);}
+
+/* PROGRESS BAR */
+.progress-bar-wrap{height:3px;background:var(--surface);position:relative;z-index:1;}
+.progress-bar-fill{height:100%;width:66%;background:linear-gradient(90deg,var(--accent),var(--accent3));transition:width 0.8s ease;border-radius:0 2px 2px 0;}
+
+/* LAYOUT */
+.page{position:relative;z-index:1;max-width:1220px;margin:0 auto;padding:40px 40px 100px;}
+.checkout-grid{display:grid;grid-template-columns:1fr 400px;gap:32px;align-items:start;}
+
+/* SECTION CARD */
+.section-card{
+  background:var(--card);border:1px solid var(--border2);border-radius:var(--radius-lg);
+  padding:28px 32px;margin-bottom:20px;
+  animation:fadeUp 0.5s ease both;
+  transition:border-color 0.3s;
+}
+.section-card:hover{border-color:var(--border);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.section-card:nth-child(2){animation-delay:0.1s;}
+.section-card:nth-child(3){animation-delay:0.18s;}
+
+.section-header{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+.section-num{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent3));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;
+}
+.section-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;}
+.section-sub{font-size:13px;color:var(--muted);margin-left:auto;}
+
+/* FORM FIELDS */
+.form-row{display:grid;gap:14px;margin-bottom:14px;}
+.form-row.cols-2{grid-template-columns:1fr 1fr;}
+.form-row.cols-3{grid-template-columns:1fr 1fr 1fr;}
+.form-row.cols-1{grid-template-columns:1fr;}
+
+.field{display:flex;flex-direction:column;gap:6px;}
+.field label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;}
+.field input,.field select{
+  background:var(--surface);border:1px solid var(--border2);border-radius:12px;
+  color:var(--text);font-size:14px;padding:13px 16px;
+  font-family:'DM Sans',sans-serif;outline:none;transition:all 0.2s;
+  -webkit-appearance:none;
+}
+.field input:focus,.field select:focus{border-color:var(--accent);background:rgba(108,99,255,0.05);box-shadow:0 0 0 3px rgba(108,99,255,0.1);}
+.field input::placeholder{color:var(--muted);}
+.field select option{background:var(--card);color:var(--text);}
+.field-icon{position:relative;}
+.field-icon input{padding-left:42px;}
+.field-icon i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none;}
+
+/* PAYMENT METHODS */
+.pay-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.pay-method{
+  border:2px solid var(--border2);border-radius:var(--radius);padding:16px;
+  cursor:pointer;transition:all 0.25s;text-align:center;
+  background:var(--surface);
+}
+.pay-method:hover{border-color:rgba(108,99,255,0.4);background:rgba(108,99,255,0.05);}
+.pay-method.selected{border-color:var(--accent);background:rgba(108,99,255,0.08);box-shadow:0 0 0 3px rgba(108,99,255,0.1);}
+.pay-method i{font-size:22px;display:block;margin-bottom:8px;color:var(--muted);}
+.pay-method.selected i{color:var(--accent);}
+.pay-method span{font-size:12px;font-weight:600;color:var(--muted);}
+.pay-method.selected span{color:var(--text);}
+.pay-method input[type=radio]{display:none;}
+
+/* UPI FIELD */
+.pay-detail{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px;display:none;
+}
+.pay-detail.show{display:block;animation:fadeUp 0.3s ease;}
+
+/* CARD FIELD */
+.card-number-wrap{position:relative;}
+.card-badges{position:absolute;right:12px;top:50%;transform:translateY(-50%);display:flex;gap:4px;}
+.card-badge{width:32px;height:20px;border-radius:4px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--muted);}
+
+/* AI SLOT */
+.ai-panel{
+  background:linear-gradient(135deg,rgba(108,99,255,0.08) 0%,rgba(0,210,255,0.05) 100%);
+  border:1px solid rgba(108,99,255,0.2);border-radius:var(--radius-lg);
+  padding:24px;
+}
+.ai-header{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.ai-badge{
+  background:linear-gradient(135deg,var(--accent),var(--accent3));
+  color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+  padding:4px 10px;border-radius:50px;
+}
+.ai-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+.ai-fields{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.ai-btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;padding:13px;border-radius:50px;border:none;
+  background:linear-gradient(135deg,var(--accent),var(--accent3));
+  color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all 0.3s;letter-spacing:0.3px;
+}
+.ai-btn:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(108,99,255,0.35);}
+.ai-result{
+  margin-top:16px;padding:14px 18px;
+  background:rgba(0,200,150,0.08);border:1px solid rgba(0,200,150,0.25);
+  border-radius:var(--radius);display:none;
+}
+.ai-result.show{display:flex;align-items:center;gap:12px;animation:fadeUp 0.3s ease;}
+.ai-result i{font-size:20px;color:var(--green);}
+.ai-result-text{font-size:14px;font-weight:600;}
+.ai-result-slot{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--green);}
+
+/* ORDER SUMMARY PANEL */
+.summary-panel{
+  background:var(--card);border:1px solid var(--border2);border-radius:var(--radius-lg);
+  padding:28px;position:sticky;top:88px;
+  animation:fadeUp 0.5s ease 0.25s both;
+}
+.summary-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.summary-title span{font-size:13px;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:400;margin-left:auto;}
+
+/* ORDER ITEMS */
+.order-items{margin-bottom:20px;display:flex;flex-direction:column;gap:12px;}
+.order-item{display:flex;align-items:center;gap:12px;padding:10px;background:var(--surface);border-radius:12px;border:1px solid var(--border2);}
+.oi-img{width:50px;height:50px;border-radius:10px;background:var(--card);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
+.oi-img img{width:100%;height:100%;object-fit:contain;}
+.oi-info{flex:1;min-width:0;}
+.oi-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.oi-qty{font-size:11px;color:var(--muted);}
+.oi-price{font-size:14px;font-weight:700;font-family:'Syne',sans-serif;flex-shrink:0;}
+
+.divider{height:1px;background:var(--border2);margin:16px 0;}
+
+/* SUMMARY ROWS */
+.sum-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:14px;}
+.sum-row .lbl{color:var(--muted);}
+.sum-row .val{font-weight:600;}
+.sum-row.green .val{color:var(--green);}
+.sum-row.red .val{color:var(--accent2);}
+.sum-row.discount .val{color:var(--accent2);}
+
+.total-wrap{
+  margin-top:16px;padding:18px;
+  background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(0,210,255,0.06));
+  border:1px solid rgba(108,99,255,0.2);border-radius:var(--radius);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.total-lbl{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;}
+.total-val{
+  font-family:'Syne',sans-serif;font-size:28px;font-weight:800;
+  background:linear-gradient(135deg,#fff,#a8a5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+
+/* SAVINGS BADGE */
+.savings-badge{
+  display:flex;align-items:center;gap:8px;
+  background:var(--green-dim);border:1px solid rgba(0,200,150,0.25);
+  border-radius:50px;padding:8px 16px;margin:16px 0;font-size:13px;
+}
+.savings-badge i{color:var(--green);}
+.savings-badge strong{color:var(--green);}
+
+/* PLACE ORDER BTN */
+.place-btn{
+  width:100%;padding:17px;border-radius:50px;border:none;
+  background:linear-gradient(135deg,#6c63ff 0%,#00d2ff 100%);
+  color:#fff;font-family:'Syne',sans-serif;font-size:16px;font-weight:800;
+  cursor:pointer;transition:all 0.3s;letter-spacing:0.5px;margin-top:16px;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 8px 32px rgba(108,99,255,0.3);
+  position:relative;overflow:hidden;
+}
+.place-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent);
+  opacity:0;transition:opacity 0.3s;
+}
+.place-btn:hover::before{opacity:1;}
+.place-btn:hover{transform:translateY(-2px);box-shadow:0 16px 48px rgba(108,99,255,0.45);}
+.place-btn:active{transform:translateY(0);}
+.place-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* SECURE NOTICE */
+.secure-notice{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:12px;font-size:12px;color:var(--muted);}
+.secure-notice i{color:var(--green);}
+
+/* TRUST ROW */
+.trust-row{display:flex;justify-content:space-around;margin-top:20px;padding-top:18px;border-top:1px solid var(--border2);}
+.trust-item{text-align:center;}
+.trust-item i{font-size:18px;color:var(--accent);display:block;margin-bottom:5px;}
+.trust-item span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:9000;display:flex;flex-direction:column;gap:10px;align-items:center;pointer-events:none;}
+.toast{
+  background:var(--surface);border:1px solid var(--border);
+  padding:12px 24px;border-radius:50px;font-size:14px;font-weight:500;
+  box-shadow:0 10px 40px rgba(0,0,0,0.5);
+  display:flex;align-items:center;gap:10px;white-space:nowrap;
+  animation:toastIn 0.3s ease, toastOut 0.3s ease 2.5s both;
+}
+@keyframes toastIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+@keyframes toastOut{to{opacity:0;transform:translateY(20px);}}
+.toast.success i{color:var(--green);}
+.toast.error i{color:var(--accent2);}
+.toast.info i{color:var(--accent);}
+
+/* SUCCESS OVERLAY */
+.success-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);
+  z-index:9999;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity 0.4s;
+}
+.success-overlay.show{opacity:1;pointer-events:all;}
+.success-modal{
+  background:var(--card);border:1px solid rgba(108,99,255,0.3);border-radius:28px;
+  padding:52px 44px;text-align:center;max-width:460px;width:92%;
+  animation:popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes popIn{from{opacity:0;transform:scale(0.75);}to{opacity:1;transform:scale(1);}}
+.success-icon{
+  width:80px;height:80px;border-radius:50%;
+  background:linear-gradient(135deg,var(--green),#00e5b0);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 24px;font-size:36px;
+  box-shadow:0 0 40px rgba(0,200,150,0.4);
+  animation:pulse 2s ease infinite;
+}
+@keyframes pulse{0%,100%{box-shadow:0 0 40px rgba(0,200,150,0.4);}50%{box-shadow:0 0 60px rgba(0,200,150,0.6);}}
+.success-modal h2{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:10px;}
+.success-modal p{color:var(--muted);line-height:1.7;margin-bottom:10px;}
+.order-ref{
+  display:inline-block;background:rgba(108,99,255,0.12);border:1px solid rgba(108,99,255,0.3);
+  color:var(--accent);font-size:13px;padding:7px 18px;border-radius:50px;margin-bottom:24px;
+  font-weight:700;letter-spacing:1.5px;font-family:'Syne',sans-serif;
+}
+.slot-chip{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--green-dim);border:1px solid rgba(0,200,150,0.3);
+  color:var(--green);font-size:13px;padding:8px 18px;border-radius:50px;
+  margin-bottom:28px;font-weight:600;
+}
+.success-actions{display:flex;gap:12px;justify-content:center;}
+.modal-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:13px 28px;border-radius:50px;
+  font-family:'Syne',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all 0.2s;text-decoration:none;border:none;
+}
+.modal-btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent3));color:#fff;}
+.modal-btn.primary:hover{transform:translateY(-2px);box-shadow:var(--glow);}
+.modal-btn.secondary{background:var(--surface);border:1px solid var(--border);color:var(--text);}
+.modal-btn.secondary:hover{border-color:var(--accent);color:var(--accent);}
+
+/* RESPONSIVE */
+@media(max-width:960px){
+  .checkout-grid{grid-template-columns:1fr;}
+  .summary-panel{position:static;}
+  header{padding:0 20px;}
+  .header-center{display:none;}
+}
+@media(max-width:600px){
+  .page{padding:20px 16px 80px;}
+  .section-card{padding:20px;}
+  .form-row.cols-2,.form-row.cols-3{grid-template-columns:1fr;}
+  .pay-methods{grid-template-columns:1fr 1fr;}
+  .ai-fields{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a class="logo" href="/dashboard">NEX<em>US</em></a>
+
+  <div class="header-center">
+    <div class="step-pill">
+      <div class="step-dot done"><i class="fa fa-check" style="font-size:11px;"></i></div>
+      <div class="step-label">Cart</div>
+      <div class="step-sep"></div>
+      <div class="step-dot active">2</div>
+      <div class="step-label active">Checkout</div>
+      <div class="step-sep"></div>
+      <div class="step-dot pending">3</div>
+      <div class="step-label">Orders</div>
+    </div>
+  </div>
+
+  <div class="nav-acts">
+    <a class="nav-pill" href="/cart"><i class="fa fa-arrow-left"></i> Back to Cart</a>
+    <a class="nav-pill danger" href="/logout"><i class="fa fa-right-from-bracket"></i></a>
+  </div>
+</header>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar-wrap">
+  <div class="progress-bar-fill"></div>
+</div>
+
+<!-- PAGE -->
+<div class="page">
+  <div style="margin-bottom:28px;animation:fadeUp 0.4s ease;">
+    <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;background:linear-gradient(135deg,#fff 0%,#a8a5ff 60%,#00d2ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px;">Secure Checkout</div>
+    <div style="color:var(--muted);font-size:14px;"><i class="fa fa-lock" style="color:var(--green);margin-right:6px;"></i>Your payment info is encrypted and secure</div>
+  </div>
+
+  <div class="checkout-grid">
+
+    <!-- LEFT COLUMN -->
+    <div>
+
+      <!-- SECTION 1: ADDRESS -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-num">1</div>
+          <div>
+            <div class="section-title">Delivery Address</div>
+          </div>
+          <div class="section-sub"><i class="fa fa-map-marker-alt" style="color:var(--accent);margin-right:4px;"></i>Shipping Info</div>
+        </div>
+
+        <div class="form-row cols-2">
+          <div class="field">
+            <label>Full Name</label>
+            <div class="field-icon">
+              <i class="fa fa-user"></i>
+              <input type="text" id="fullName" placeholder="Divya Sharma">
+            </div>
+          </div>
+          <div class="field">
+            <label>Phone Number</label>
+            <div class="field-icon">
+              <i class="fa fa-phone"></i>
+              <input type="tel" id="phone" placeholder="+91 98765 43210">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row cols-1">
+          <div class="field">
+            <label>Email Address</label>
+            <div class="field-icon">
+              <i class="fa fa-envelope"></i>
+              <input type="email" id="email" placeholder="divya@example.com">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row cols-1">
+          <div class="field">
+            <label>Street Address</label>
+            <div class="field-icon">
+              <i class="fa fa-home"></i>
+              <input type="text" id="address" placeholder="Flat / House No., Street, Area">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row cols-3">
+          <div class="field">
+            <label>City</label>
+            <input type="text" id="city" placeholder="Mumbai">
+          </div>
+          <div class="field">
+            <label>State</label>
+            <select id="state">
+              <option value="">Select State</option>
+              <option>Maharashtra</option>
+              <option>Delhi</option>
+              <option>Karnataka</option>
+              <option>Tamil Nadu</option>
+              <option>Gujarat</option>
+              <option>Rajasthan</option>
+              <option>West Bengal</option>
+              <option>Uttar Pradesh</option>
+              <option>Telangana</option>
+              <option>Madhya Pradesh</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Pincode</label>
+            <input type="text" id="pincode" placeholder="400001" maxlength="6">
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: PAYMENT -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-num">2</div>
+          <div>
+            <div class="section-title">Payment Method</div>
+          </div>
+          <div class="section-sub" style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:10px;background:var(--green-dim);color:var(--green);padding:3px 10px;border-radius:50px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">🔒 Secured</span>
+          </div>
+        </div>
+
+        <div class="pay-methods" id="payMethods">
+          <div class="pay-method selected" onclick="selectPay(this,'cod')">
+            <input type="radio" name="pay" value="cod" checked>
+            <i class="fa fa-money-bill-wave"></i>
+            <span>Cash on Delivery</span>
+          </div>
+          <div class="pay-method" onclick="selectPay(this,'upi')">
+            <input type="radio" name="pay" value="upi">
+            <i class="fa fa-mobile-screen"></i>
+            <span>UPI Payment</span>
+          </div>
+          <div class="pay-method" onclick="selectPay(this,'card')">
+            <input type="radio" name="pay" value="card">
+            <i class="fa fa-credit-card"></i>
+            <span>Card</span>
+          </div>
+        </div>
+
+        <!-- COD Info -->
+        <div class="pay-detail show" id="pay-cod">
+          <div style="display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px;">
+            <i class="fa fa-circle-info" style="color:var(--accent);font-size:18px;"></i>
+            Pay with cash when your order arrives. No extra charges.
+          </div>
+        </div>
+
+        <!-- UPI -->
+        <div class="pay-detail" id="pay-upi">
+          <div class="field">
+            <label>UPI ID</label>
+            <div class="field-icon">
+              <i class="fa fa-at"></i>
+              <input type="text" id="upiId" placeholder="yourname@upi">
+            </div>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/UPI-Logo-vector.svg/200px-UPI-Logo-vector.svg.png" style="height:28px;filter:brightness(0.8);" alt="UPI">
+            <span style="font-size:12px;color:var(--muted);align-self:center;">GPay · PhonePe · Paytm · BHIM supported</span>
+          </div>
+        </div>
+
+        <!-- CARD -->
+        <div class="pay-detail" id="pay-card">
+          <div class="form-row cols-1">
+            <div class="field">
+              <label>Card Number</label>
+              <div class="field-icon card-number-wrap">
+                <i class="fa fa-credit-card"></i>
+                <input type="text" placeholder="1234  5678  9012  3456" maxlength="19" id="cardNum" oninput="formatCard(this)">
+                <div class="card-badges">
+                  <div class="card-badge">VISA</div>
+                  <div class="card-badge">MC</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-row cols-2">
+            <div class="field">
+              <label>Expiry Date</label>
+              <input type="text" placeholder="MM / YY" maxlength="7" oninput="formatExpiry(this)">
+            </div>
+            <div class="field">
+              <label>CVV</label>
+              <input type="password" placeholder="•••" maxlength="3">
+            </div>
+          </div>
+          <div class="form-row cols-1">
+            <div class="field">
+              <label>Name on Card</label>
+              <input type="text" placeholder="As printed on card">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: AI SLOT -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-num" style="background:linear-gradient(135deg,#00c896,#00d2ff);">3</div>
+          <div>
+            <div class="section-title">AI Delivery Prediction</div>
+          </div>
+          <div class="section-sub"><span class="ai-badge">AI Powered</span></div>
+        </div>
+
+        <div class="ai-panel">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+            Our AI analyzes traffic, weather & distance to predict your optimal delivery window.
+          </div>
+
+          <div class="ai-fields">
+            <div class="field">
+              <label>Route Distance</label>
+              <input type="text" id="distance" value="—" readonly>
+            </div>
+            <div class="field">
+              <label>Traffic Condition</label>
+              <input type="text" id="traffic" value="—" readonly>
+            </div>
+            <div class="field">
+              <label>Weather</label>
+              <input type="text" id="weather" value="—" readonly>
+            </div>
+            <div class="field">
+              <label>Package Weight (kg)</label>
+              <input type="number" id="packageWeight" value="2.0" min="0.2" step="0.1">
+            </div>
+          </div>
+          <div id="aiModeNotice" style="font-size:12px;color:var(--muted);margin-bottom:12px;display:none;"></div>
+
+          <button class="ai-btn" onclick="getAISlot()" id="aiBtn">
+            <i class="fa fa-robot"></i> Predict Best Delivery Slot
+          </button>
+
+          <div class="ai-result" id="aiResult">
+            <i class="fa fa-clock"></i>
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:2px;">Predicted Delivery Window</div>
+              <div class="ai-result-slot" id="aiSlotText">—</div>
+              <div id="aiEtaText" style="font-size:13px;color:var(--muted);margin-top:8px;">ETA: —</div>
+              <div id="aiConfidenceText" style="font-size:13px;color:var(--muted);margin-top:4px;">Confidence: —</div>
+            </div>
+          </div>
+          <div id="aiSlotList" style="display:none;margin-top:16px;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: ORDER SUMMARY -->
+    <div class="summary-panel">
+      <div class="summary-title">
+        Order Summary
+        <span id="itemCountLabel">0 items</span>
+      </div>
+
+      <!-- ITEMS -->
+      <div class="order-items" id="orderItems">
+        <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">
+          <i class="fa fa-spinner fa-spin"></i> Loading items...
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="sum-row">
+        <span class="lbl">Subtotal</span>
+        <span class="val" id="sumSubtotal">₹0</span>
+      </div>
+      <div class="sum-row green">
+        <span class="lbl"><i class="fa fa-truck" style="margin-right:5px;"></i>Delivery</span>
+        <span class="val">FREE</span>
+      </div>
+      <div class="sum-row" id="sumCouponRow" style="display:none;">
+        <span class="lbl">🎉 Coupon Discount</span>
+        <span class="val" style="color:var(--accent2);" id="sumCouponVal">-₹0</span>
+      </div>
+      <div class="sum-row">
+        <span class="lbl">GST (5%)</span>
+        <span class="val" id="sumTax">₹0</span>
+      </div>
+
+      <div class="savings-badge" id="savingsBadge" style="display:none;">
+        <i class="fa fa-tag"></i>
+        <span>You're saving <strong id="savingsAmt">₹0</strong> on this order!</span>
+      </div>
+
+      <div class="total-wrap">
+        <span class="total-lbl">Total</span>
+        <span class="total-val" id="sumTotal">₹0</span>
+      </div>
+
+      <button class="place-btn" id="placeBtn" onclick="placeOrder()">
+        <i class="fa fa-bolt"></i> Place Order Securely
+      </button>
+
+      <div class="secure-notice">
+        <i class="fa fa-lock"></i>
+        256-bit SSL encryption · PCI DSS compliant
+      </div>
+
+      <div class="trust-row">
+        <div class="trust-item"><i class="fa fa-rotate-left"></i><span>Easy Returns</span></div>
+        <div class="trust-item"><i class="fa fa-shield-halved"></i><span>2yr Warranty</span></div>
+        <div class="trust-item"><i class="fa fa-headset"></i><span>24/7 Support</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-modal">
+    <div class="success-icon">✓</div>
+    <div class="order-ref" id="successOrderRef">ORDER #000000</div>
+    <h2>Order Confirmed! 🎉</h2>
+    <p>Thank you for shopping at <strong>NEXUS Store</strong>.<br>You'll receive a confirmation shortly.</p>
+    <div class="slot-chip" id="successSlot" style="display:none;">
+      <i class="fa fa-clock"></i>
+      <span id="successSlotText">Delivery Slot</span>
+    </div>
+    <div class="slot-chip" id="successEta" style="display:none;">
+      <i class="fa fa-calendar-day"></i>
+      <span id="successEtaText">ETA</span>
+    </div>
+    <div class="success-actions">
+      <a class="modal-btn primary" id="trackLiveBtn" href="/orders"><i class="fa fa-location-dot"></i> Track Live Location</a>
+      <a class="modal-btn secondary" href="/orders"><i class="fa fa-box"></i> My Orders</a>
+      <a class="modal-btn secondary" href="/product"><i class="fa fa-bag-shopping"></i> Shop More</a>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+const RAZORPAY_KEY = "{{ razorpay_key_id }}";
+const CART_KEY = 'cart';
+const CAT_LABELS = {
+  clothing:'Clothing', shoes:'Shoes', furniture:'Furniture',
+  electronics:'Electronics', audio:'Audio', wearable:'Wearables',
+  gaming:'Gaming', beauty:'Beauty', sports:'Sports'
+};
+
+let currentPayMethod = 'cod';
+let predictedSlot = '';
+let predictedEta = '';
+let aiPredictionData = {};
+
+// ── LOAD CART & RENDER SUMMARY ──
+function loadCart(){
+  try{ return JSON.parse(localStorage.getItem(CART_KEY))||{}; }catch(e){ return {}; }
+}
+
+function renderSummary(){
+  const cart = loadCart();
+  const items = Object.values(cart);
+  const itemsEl = document.getElementById('orderItems');
+
+  if(!items.length){
+    itemsEl.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">Cart is empty</div>`;
+    document.getElementById('placeBtn').disabled = true;
+    return;
+  }
+
+  document.getElementById('itemCountLabel').textContent = items.length + ' item' + (items.length>1?'s':'');
+
+  itemsEl.innerHTML = items.map(item => `
+    <div class="order-item">
+      <div class="oi-img">
+        <img src="${item.image||''}" alt="${item.name}" onerror="this.src='https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=200'">
+      </div>
+      <div class="oi-info">
+        <div class="oi-name">${item.name}</div>
+        <div class="oi-qty">Qty: ${item.qty} · ${CAT_LABELS[item.cat]||item.cat||''}</div>
+      </div>
+      <div class="oi-price">₹${(item.price*item.qty).toLocaleString()}</div>
+    </div>
+  `).join('');
+
+  const subtotal = items.reduce((s,i)=>s+(i.price*i.qty),0);
+  const savings  = items.reduce((s,i)=>s+(i.oldPrice?((i.oldPrice-i.price)*i.qty):0),0);
+  const tax      = Math.round(subtotal*0.05);
+  const total    = subtotal + tax;
+
+  document.getElementById('sumSubtotal').textContent = '₹'+subtotal.toLocaleString();
+  document.getElementById('sumTax').textContent      = '₹'+tax.toLocaleString();
+  document.getElementById('sumTotal').textContent    = '₹'+total.toLocaleString();
+
+  if(savings>0){
+    document.getElementById('savingsBadge').style.display='flex';
+    document.getElementById('savingsAmt').textContent='₹'+savings.toLocaleString();
+  }
+}
+
+// ── PAYMENT METHOD ──
+function selectPay(el, method){
+  document.querySelectorAll('.pay-method').forEach(m=>m.classList.remove('selected'));
+  document.querySelectorAll('.pay-detail').forEach(d=>{d.classList.remove('show');});
+  el.classList.add('selected');
+  el.querySelector('input[type=radio]').checked = true;
+  currentPayMethod = method;
+  const det = document.getElementById('pay-'+method);
+  if(det){ det.classList.add('show'); }
+}
+
+// ── CARD FORMATTING ──
+function formatCard(el){
+  let v = el.value.replace(/\D/g,'').substring(0,16);
+  el.value = v.replace(/(.{4})/g,'$1  ').trim();
+}
+function formatExpiry(el){
+  let v = el.value.replace(/\D/g,'');
+  if(v.length>=2) v = v.substring(0,2)+' / '+v.substring(2,4);
+  el.value = v;
+}
+
+// ── AI SLOT PREDICTION ──
+async function getAISlot(){
+  const btn = document.getElementById('aiBtn');
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Predicting...';
+  btn.disabled = true;
+
+  const street = document.getElementById('address').value.trim();
+  const city = document.getElementById('city').value.trim();
+  const state = document.getElementById('state').value.trim();
+  const pincode = document.getElementById('pincode').value.trim();
+  const fullAddress = [street, city, state, pincode].filter(Boolean).join(', ');
+  const packageWeight = parseFloat(document.getElementById('packageWeight').value) || 2.0;
+  const orderHour = new Date().getHours();
+
+  if(!fullAddress){
+    showToast('Enter your delivery address before predicting.','fa-map-marker-alt','error');
+    btn.innerHTML = '<i class="fa fa-robot"></i> Predict Best Delivery Slot';
+    btn.disabled = false;
+    return;
+  }
+
+  try{
+    const r = await fetch('/api/predict_slot',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      body:JSON.stringify({
+        address: fullAddress,
+        package_weight: packageWeight,
+        order_hour: orderHour,
+        day_of_week: new Date().getDay()
+      })
+    });
+    const data = await r.json();
+    if(data.success){
+      aiPredictionData = data;
+      predictedSlot = data.predicted_slot || '';
+      predictedEta = data.delivery_category ? `${data.delivery_category} · ${data.estimated_time_readable}` : `${data.estimated_time_readable}`;
+      document.getElementById('distance').value = data.distance_km ? `${data.distance_km} km` : '—';
+      document.getElementById('traffic').value = data.traffic_level ? data.traffic_level.toUpperCase() : '—';
+      document.getElementById('weather').value = data.weather_condition ? data.weather_condition.toUpperCase() : '—';
+      document.getElementById('aiSlotText').textContent = predictedSlot;
+      document.getElementById('aiEtaText').textContent = `ETA: ${predictedEta}`;
+      document.getElementById('aiConfidenceText').textContent = `Confidence: ${data.confidence_pct || Math.round((data.confidence||0)*100)}%`;
+      if(data.demo_mode){
+        document.getElementById('aiModeNotice').style.display = 'block';
+        document.getElementById('aiModeNotice').textContent = data.fallback_messages?.join(' ') || 'Demo mode active: using fallback data.';
+      } else {
+        document.getElementById('aiModeNotice').style.display = 'none';
+      }
+      document.getElementById('aiResult').classList.add('show');
+      const slotList = document.getElementById('aiSlotList');
+      if(Array.isArray(data.dynamic_slots) && data.dynamic_slots.length){
+        slotList.innerHTML = data.dynamic_slots.map(slot =>
+          `<div style="padding:14px;border:1px solid rgba(255,255,255,0.08);border-radius:16px;background:rgba(255,255,255,0.03);">
+             <div style="font-size:13px;font-weight:700;margin-bottom:6px;">${slot.day} · ${slot.slot_short}</div>
+             <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">${slot.window}</div>
+             <div style="font-size:12px;display:flex;justify-content:space-between;gap:8px;">
+               <span>Risk ${slot.risk_score}</span>
+               <span>${slot.recommended ? 'Recommended' : 'Available'}</span>
+             </div>
+           </div>`
+        ).join('');
+        slotList.style.display = 'grid';
+      } else {
+        slotList.style.display = 'none';
+      }
+      showToast('Delivery slot predicted! 🤖','fa-robot','info');
+    } else {
+      showToast('Prediction failed: '+(data.error||'Unknown'),'fa-circle-xmark','error');
+    }
+  }catch(e){
+    showToast('Error: '+e.message,'fa-circle-xmark','error');
+  }finally{
+    btn.innerHTML = '<i class="fa fa-robot"></i> Predict Best Delivery Slot';
+    btn.disabled = false;
+  }
+}
+
+// ── PLACE ORDER ──
+async function placeOrder(){
+  const cart = loadCart();
+  if(!Object.keys(cart).length){ showToast('Cart is empty','fa-bag-shopping','error'); return; }
+
+  // Basic validation
+  const name = document.getElementById('fullName').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const addr  = document.getElementById('address').value.trim();
+  const email = document.getElementById('email').value.trim();
+  if(!name||!phone||!addr){
+    showToast('Please fill delivery address','fa-map-marker-alt','error');
+    return;
+  }
+
+  const btn = document.getElementById('placeBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Processing...';
+
+  const items = Object.values(cart);
+  const subtotal = items.reduce((s,i)=>s+(i.price*i.qty),0);
+  const tax = Math.round(subtotal*0.05);
+  const totalAmount = subtotal + tax;
+  
+  const packageWeight = parseFloat(document.getElementById('packageWeight').value) || 2.0;
+  let distance = 10;
+  let traffic = 'medium';
+  let weather = 'sunny';
+
+  if (aiPredictionData && aiPredictionData.success) {
+    distance = aiPredictionData.distance_km || distance;
+    traffic = aiPredictionData.traffic_level || traffic;
+    weather = aiPredictionData.weather_condition || weather;
+  } else {
+    showToast('Running prediction before placing order...','fa-robot','info');
+    await getAISlot();
+    if (!aiPredictionData.success) {
+      showToast('Unable to predict delivery slot','fa-circle-xmark','error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa fa-bolt"></i> Place Order Securely';
+      return;
+    }
+    distance = aiPredictionData.distance_km || distance;
+    traffic = aiPredictionData.traffic_level || traffic;
+    weather = aiPredictionData.weather_condition || weather;
+  }
+
+  // Handle Online Payment
+  if (currentPayMethod !== 'cod') {
+    try {
+      // 1. Create Razorpay Order
+      const orderRes = await fetch('/api/payments/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: totalAmount })
+      });
+      const orderData = await orderRes.json();
+      if (!orderData.success) throw new Error(orderData.error || 'Payment initialization failed');
+
+      // 2. Open Razorpay Checkout
+      const options = {
+        key: RAZORPAY_KEY,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "NEXUS Store",
+        description: "Order Payment",
+        order_id: orderData.order_id,
+        handler: async function (response) {
+          btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Verifying Payment...';
+          
+          // 3. Verify Payment
+          const verifyRes = await fetch('/api/payments/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature
+            })
+          });
+          const verifyData = await verifyRes.json();
+          
+          if (verifyData.success) {
+            // 4. Place Final Order
+            finalizeOrder(response.razorpay_payment_id, "Paid");
+          } else {
+            showToast('Payment verification failed', 'fa-circle-xmark', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa fa-bolt"></i> Place Order Securely';
+          }
+        },
+        prefill: {
+          name: name,
+          email: email,
+          contact: phone
+        },
+        theme: { color: "#6c63ff" },
+        modal: {
+          ondismiss: function() {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa fa-bolt"></i> Place Order Securely';
+          }
+        }
+      };
+      
+      const rzp = new Razorpay(options);
+      rzp.open();
+      
+    } catch (err) {
+      showToast('Payment Error: ' + err.message, 'fa-circle-xmark', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa fa-bolt"></i> Place Order Securely';
+    }
+  } else {
+    // Cash on Delivery
+    finalizeOrder(null, "Unpaid");
+  }
+
+  async function finalizeOrder(paymentId, paymentStatus) {
+    try {
+      btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving Order...';
+      const r = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          items,
+          total: totalAmount,
+          distance,
+          traffic,
+          weather,
+          package_weight: packageWeight,
+          payment_id: paymentId,
+          payment_status: paymentStatus
+        })
+      });
+      const data = await r.json();
+      if (!r.ok || !data.success) throw new Error(data.error || 'Order failed');
+
+      localStorage.removeItem(CART_KEY);
+      document.getElementById('successOrderRef').textContent = 'ORDER #' + data.order_id;
+      if (data.predicted_slot) {
+        document.getElementById('successSlotText').textContent = '📦 ' + data.predicted_slot;
+        document.getElementById('successSlot').style.display = 'inline-flex';
+      }
+      if (predictedEta) {
+        document.getElementById('successEtaText').textContent = predictedEta;
+        document.getElementById('successEta').style.display = 'inline-flex';
+      }
+      document.getElementById('successOverlay').classList.add('show');
+      document.getElementById('trackLiveBtn').href = '/track/' + data.order_id;
+    } catch (e) {
+      showToast('Order failed: ' + e.message, 'fa-circle-xmark', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa fa-bolt"></i> Place Order Securely';
+    }
+  }
+}
+
+// ── TOAST ──
+function showToast(msg, icon='fa-circle-check', type='success'){
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast '+type;
+  t.innerHTML = `<i class="fa ${icon}"></i> ${msg}`;
+  wrap.appendChild(t);
+  setTimeout(()=>t.remove(), 2900);
+}
+
+// ── CHECK URL PARAMS (coming from cart) ──
+function checkURLParams(){
+  const params = new URLSearchParams(window.location.search);
+  const placed = params.get('placed');
+  const slot   = params.get('slot');
+  if(placed){
+    document.getElementById('successOrderRef').textContent = 'ORDER #'+placed;
+    if(slot){
+      document.getElementById('successSlotText').textContent = '📦 '+decodeURIComponent(slot);
+      document.getElementById('successSlot').style.display='inline-flex';
+    }
+    document.getElementById('successOverlay').classList.add('show');
+  }
+}
+
+// INIT
+renderSummary();
+checkURLParams();
+</script>
+</body>
+</html>

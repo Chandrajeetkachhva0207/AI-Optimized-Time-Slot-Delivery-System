@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartParcel AI — Intelligent Delivery Intelligence</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════════ */
+:root {
+  --navy:    #080c14;
+  --navy2:   #0d1220;
+  --navy3:   #111827;
+  --slate:   #1e2a3a;
+  --slate2:  #263347;
+  --cyan:    #22d3ee;
+  --cyan2:   #06b6d4;
+  --cyan3:   #0ea5e9;
+  --indigo:  #6366f1;
+  --violet:  #8b5cf6;
+  --white:   #f1f5f9;
+  --dim:     rgba(241,245,249,0.55);
+  --muted:   rgba(241,245,249,0.28);
+  --border:  rgba(255,255,255,0.06);
+  --border2: rgba(34,211,238,0.18);
+  --glass:   rgba(255,255,255,0.03);
+  --glow:    rgba(34,211,238,0.12);
+  --mono:    'DM Mono', monospace;
+  --display: 'Syne', sans-serif;
+  --body:    'DM Sans', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--body); background: var(--navy); color: var(--white); overflow-x: hidden; cursor: none; }
+
+/* ── CUSTOM CURSOR ── */
+#cur { position:fixed;width:8px;height:8px;background:var(--cyan);border-radius:50%;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);transition:transform .08s;mix-blend-mode:screen; }
+#cur-ring { position:fixed;width:32px;height:32px;border:1px solid rgba(34,211,238,.4);border-radius:50%;pointer-events:none;z-index:99998;transform:translate(-50%,-50%);transition:all .14s ease; }
+
+/* ── NOISE GRAIN ── */
+body::after { content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.032'/%3E%3C/svg%3E");pointer-events:none;z-index:9000; }
+
+/* ══════════════════════════════════════════════
+   NAVBAR
+══════════════════════════════════════════════ */
+.navbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  padding: 22px 0;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition: all .5s cubic-bezier(.23,1,.32,1);
+}
+.navbar.stuck {
+  background: rgba(8,12,20,.88);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  padding: 13px 0;
+  border-bottom-color: var(--border);
+}
+.navbar-brand {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 19px;
+  color: var(--white) !important;
+  letter-spacing: -.4px;
+  display: flex; align-items: center; gap: 9px;
+}
+.brand-pulse {
+  width: 8px; height: 8px;
+  background: var(--cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(34,211,238,.5);
+  animation: brandPulse 2.2s ease-in-out infinite;
+}
+@keyframes brandPulse { 0%,100%{box-shadow:0 0 0 0 rgba(34,211,238,.5)} 60%{box-shadow:0 0 0 7px rgba(34,211,238,0)} }
+
+.nav-link {
+  color: var(--dim) !important;
+  font-size: 13.5px; font-weight: 500;
+  padding: 6px 15px !important;
+  transition: color .25s;
+  position: relative;
+}
+.nav-link::after {
+  content: '';
+  position: absolute; bottom: 0; left: 15px; right: 15px;
+  height: 1px; background: var(--cyan);
+  transform: scaleX(0); transition: transform .3s;
+}
+.nav-link:hover { color: var(--white) !important; }
+.nav-link:hover::after { transform: scaleX(1); }
+
+.dropdown-menu {
+  background: var(--navy2);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 8px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.55), 0 0 0 1px var(--border);
+}
+.dropdown-item {
+  color: var(--dim); border-radius: 9px;
+  padding: 10px 14px; font-size: 13px; font-weight: 500;
+  transition: all .2s;
+}
+.dropdown-item:hover { background: var(--glass); color: var(--cyan); }
+
+.btn-register {
+  background: linear-gradient(135deg, var(--cyan2), var(--indigo));
+  color: var(--navy) !important;
+  border-radius: 100px; padding: 9px 22px !important;
+  font-size: 13px; font-weight: 700;
+  transition: all .3s; border: none;
+}
+.btn-register:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(34,211,238,.35); color: var(--navy) !important; }
+.navbar-toggler { border: none; color: var(--white); }
+.navbar-toggler:focus { box-shadow: none; }
+.navbar-toggler-icon { filter: invert(1); }
+
+/* ══════════════════════════════════════════════
+   HERO
+══════════════════════════════════════════════ */
+.hero {
+  min-height: 100vh;
+  background: var(--navy);
+  display: flex; align-items: center;
+  padding-top: 96px;
+  position: relative; overflow: hidden;
+}
+
+/* SVG grid background */
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(34,211,238,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,211,238,.04) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 50%, black 20%, transparent 75%);
+}
+
+/* Mesh glow orbs */
+.mesh { position: absolute; border-radius: 50%; filter: blur(110px); pointer-events: none; }
+.mesh1 { width:700px;height:700px; background:radial-gradient(circle,rgba(34,211,238,.09),transparent 65%); top:-200px;left:-180px; animation:meshFloat 14s ease-in-out infinite; }
+.mesh2 { width:550px;height:550px; background:radial-gradient(circle,rgba(99,102,241,.08),transparent 65%); bottom:-150px;right:-120px; animation:meshFloat 18s ease-in-out infinite reverse; }
+.mesh3 { width:380px;height:380px; background:radial-gradient(circle,rgba(139,92,246,.06),transparent 65%); top:35%;left:38%; animation:meshFloat 11s ease-in-out infinite; }
+@keyframes meshFloat { 0%,100%{transform:translate(0,0)} 33%{transform:translate(30px,-25px)} 66%{transform:translate(-18px,22px)} }
+
+/* Scanlines */
+.scanlines { position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,.005) 3px,rgba(255,255,255,.005) 4px);pointer-events:none; }
+
+/* Corner brackets */
+.bracket { position:absolute;width:44px;height:44px;opacity:.3; }
+.bracket-tl { top:20px;left:20px;border-top:1.5px solid var(--cyan);border-left:1.5px solid var(--cyan); }
+.bracket-tr { top:20px;right:20px;border-top:1.5px solid var(--cyan);border-right:1.5px solid var(--cyan); }
+.bracket-bl { bottom:20px;left:20px;border-bottom:1.5px solid var(--cyan);border-left:1.5px solid var(--cyan); }
+.bracket-br { bottom:20px;right:20px;border-bottom:1.5px solid var(--cyan);border-right:1.5px solid var(--cyan); }
+
+.hero-inner { position:relative;z-index:2;width:100%; }
+
+/* Hero tag line */
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--cyan); letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 28px;
+}
+.tag-bar { width: 30px; height: 1px; background: var(--cyan); }
+
+/* Heading */
+.hero-heading {
+  font-family: var(--display);
+  font-size: clamp(42px, 6vw, 82px);
+  font-weight: 800;
+  line-height: 1.0;
+  letter-spacing: -3px;
+  color: var(--white);
+}
+.hero-heading .hl {
+  background: linear-gradient(90deg, var(--cyan), var(--cyan3), var(--indigo));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-heading .ghost {
+  -webkit-text-stroke: 1px rgba(241,245,249,.2);
+  -webkit-text-fill-color: transparent;
+}
+.hero-sub {
+  color: var(--dim); font-size: 16px; font-weight: 300;
+  line-height: 1.85; max-width: 460px; margin-top: 26px;
+}
+
+/* CTA buttons */
+.hero-btns { display:flex;gap:14px;flex-wrap:wrap;margin-top:42px; }
+.btn-primary-hero {
+  background: linear-gradient(135deg, var(--cyan2), var(--cyan3));
+  color: var(--navy);
+  padding: 15px 32px; border-radius: 100px;
+  font-weight: 700; font-size: 14px;
+  text-decoration: none;
+  display: inline-flex; align-items: center; gap: 9px;
+  transition: all .35s cubic-bezier(.23,1,.32,1);
+  position: relative; overflow: hidden; border: none;
+}
+.btn-primary-hero::before { content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.18),transparent);border-radius:inherit; }
+.btn-primary-hero:hover { transform:translateY(-3px);box-shadow:0 18px 48px rgba(34,211,238,.35);color:var(--navy); }
+.btn-secondary-hero {
+  color: var(--dim); padding: 15px 28px; border-radius: 100px;
+  font-weight: 500; font-size: 14px;
+  text-decoration: none;
+  display: inline-flex; align-items: center; gap: 9px;
+  border: 1px solid var(--border);
+  transition: all .3s;
+}
+.btn-secondary-hero:hover { color:var(--white);border-color:rgba(34,211,238,.3);background:rgba(34,211,238,.04); }
+
+/* ── LIVE ORDER CARD ── */
+.live-order-card {
+  background: var(--navy2);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 32px 80px rgba(0,0,0,.55), 0 0 0 1px var(--border), 0 0 60px rgba(34,211,238,.04);
+}
+.live-order-card::before { content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,var(--cyan),var(--indigo),transparent); }
+
+.loc-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(34,211,238,.03);
+}
+.loc-dots { display:flex;gap:6px; }
+.loc-dot { width:10px;height:10px;border-radius:50%; }
+.loc-dot:nth-child(1){background:#ff5f57}
+.loc-dot:nth-child(2){background:#febc2e}
+.loc-dot:nth-child(3){background:#28c840}
+.loc-title { font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:1px; }
+.loc-live { display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:#28c840;letter-spacing:.5px; }
+.live-dot { width:6px;height:6px;background:#28c840;border-radius:50%;animation:blink 1.4s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:.25} }
+
+.loc-body { padding: 22px; }
+
+/* Order ID row */
+.order-id-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 18px;
+}
+.oid {
+  font-family: var(--mono); font-size: 12px;
+  color: var(--cyan); letter-spacing: 1px;
+  background: rgba(34,211,238,.08);
+  border: 1px solid rgba(34,211,238,.15);
+  padding: 5px 12px; border-radius: 8px;
+}
+.status-badge {
+  font-family: var(--mono); font-size: 10px;
+  color: #facc15;
+  background: rgba(250,204,21,.08);
+  border: 1px solid rgba(250,204,21,.2);
+  padding: 4px 11px; border-radius: 8px;
+  letter-spacing: .5px;
+}
+
+/* Progress track */
+.progress-track { margin-bottom: 22px; }
+.track-labels { display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.5px;margin-bottom:8px; }
+.track-bar { height: 4px; background: var(--slate); border-radius: 4px; overflow:hidden; }
+.track-fill { height:100%;border-radius:4px;background:linear-gradient(90deg,var(--cyan),var(--indigo));animation:trackGrow 2s cubic-bezier(.23,1,.32,1) .3s both; }
+@keyframes trackGrow { from{width:0} to{width:68%} }
+.track-nodes { display:flex;justify-content:space-between;margin-top:12px; }
+.track-node { text-align:center; }
+.tnode-dot { width:10px;height:10px;border-radius:50%;margin:0 auto 6px; }
+.tnode-dot.done { background:var(--cyan); }
+.tnode-dot.active { background:var(--indigo);box-shadow:0 0 0 3px rgba(99,102,241,.25); animation:nodePulse 1.5s ease-in-out infinite; }
+.tnode-dot.pending { background:var(--slate2); }
+@keyframes nodePulse { 0%,100%{box-shadow:0 0 0 3px rgba(99,102,241,.25)} 50%{box-shadow:0 0 0 7px rgba(99,102,241,.05)} }
+.tnode-lbl { font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.4px; }
+.tnode-lbl.act { color:var(--cyan); }
+
+/* AI ETA Box */
+.ai-eta-box {
+  background: var(--slate);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.ai-eta-left .label { font-family:var(--mono);font-size:9px;color:var(--cyan);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px; }
+.ai-eta-num { font-family:var(--display);font-size:28px;font-weight:800;color:var(--white);letter-spacing:-1px;line-height:1; }
+.ai-eta-num span { font-size:13px;font-weight:400;color:var(--muted); }
+.ai-conf {
+  text-align:right;
+}
+.conf-ring {
+  width:52px;height:52px;
+  position:relative;
+  margin:0 auto 4px;
+}
+.conf-ring svg { transform:rotate(-90deg); }
+.conf-ring circle.bg { fill:none;stroke:var(--slate2);stroke-width:4; }
+.conf-ring circle.fg { fill:none;stroke:var(--cyan);stroke-width:4;stroke-linecap:round;stroke-dasharray:126;stroke-dashoffset:10;animation:confCircle 1.5s cubic-bezier(.23,1,.32,1) .5s both; }
+@keyframes confCircle { from{stroke-dashoffset:126} to{stroke-dashoffset:10} }
+.conf-pct { font-family:var(--mono);font-size:9px;color:var(--cyan);text-align:center;letter-spacing:.5px; }
+
+/* Route chip row */
+.chip-row { display:flex;gap:8px;flex-wrap:wrap; }
+.chip { display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--dim);background:var(--slate);border:1px solid var(--border);border-radius:8px;padding:7px 12px; }
+.chip i { color:var(--cyan);font-size:12px; }
+
+/* ── FLOATING MINI CARDS ── */
+.float-card {
+  background: rgba(13,18,32,.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  position: absolute;
+  white-space: nowrap;
+  z-index: 3;
+}
+.fc-label { font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px; }
+.fc-value { font-family:var(--display);font-size:16px;font-weight:700;color:var(--white);letter-spacing:-.3px; }
+.fc-sub { font-family:var(--mono);font-size:9px;color:var(--cyan);margin-top:3px; }
+.float-card.fc1 { top:-18px;right:-22px;animation:floatCard 5s ease-in-out infinite; }
+.float-card.fc2 { bottom:-18px;left:-22px;animation:floatCard 6.5s ease-in-out infinite reverse; }
+@keyframes floatCard { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+
+/* ── HERO STATS ── */
+.hero-stats { border-top:1px solid var(--border);margin-top:60px;padding-top:48px; }
+.stat-num { font-family:var(--display);font-size:36px;font-weight:800;letter-spacing:-2px;color:var(--white);line-height:1; }
+.stat-label { font-size:13px;color:var(--muted);margin-top:5px; }
+.stat-up { display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:10px;color:var(--cyan);margin-top:4px; }
+
+/* ══════════════════════════════════════════════
+   TRUST BAR
+══════════════════════════════════════════════ */
+.trust-bar { background:var(--navy2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:22px 0; }
+.trust-label { font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;white-space:nowrap; }
+.trust-logos { display:flex;align-items:center;gap:36px;flex-wrap:wrap; }
+.trust-logo { font-family:var(--display);font-weight:700;font-size:15px;color:rgba(241,245,249,.18);letter-spacing:-.3px;transition:color .3s; }
+.trust-logo:hover { color:rgba(34,211,238,.45); }
+
+/* ══════════════════════════════════════════════
+   FEATURES — BENTO GRID
+══════════════════════════════════════════════ */
+.features-section { padding:130px 0;background:var(--navy);position:relative; }
+.features-section::before {
+  content:'';position:absolute;
+  width:500px;height:500px;
+  background:radial-gradient(circle,rgba(99,102,241,.06),transparent 70%);
+  right:-100px;top:60px;border-radius:50%;
+}
+
+.eyebrow { display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px; }
+.eyebrow-line { width:24px;height:1px;background:var(--cyan); }
+.sec-heading { font-family:var(--display);font-size:clamp(30px,4vw,50px);font-weight:800;letter-spacing:-1.8px;color:var(--white);line-height:1.07; }
+.sec-sub { color:var(--muted);font-size:15px;font-weight:300;max-width:400px;line-height:1.85;margin-top:14px; }
+
+/* Bento */
+.bento { display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:auto;gap:14px;margin-top:58px; }
+.bcard { background:var(--navy2);border:1px solid var(--border);border-radius:22px;padding:32px 30px;position:relative;overflow:hidden;transition:all .4s cubic-bezier(.23,1,.32,1); }
+.bcard::before { content:'';position:absolute;inset:0;background:radial-gradient(ellipse 220px 220px at var(--mx,50%) var(--my,50%),rgba(34,211,238,.06),transparent);opacity:0;transition:opacity .4s; }
+.bcard:hover { border-color:var(--border2);transform:translateY(-4px);box-shadow:0 20px 56px rgba(0,0,0,.4); }
+.bcard:hover::before { opacity:1; }
+
+.bcard.c4  { grid-column:span 4; }
+.bcard.c8  { grid-column:span 8; }
+.bcard.c6  { grid-column:span 6; }
+.bcard.c3  { grid-column:span 3; }
+.bcard.c12 { grid-column:span 12; }
+
+.bicon { width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:22px; }
+.bi-cyan   { background:rgba(34,211,238,.1); color:var(--cyan); border:1px solid rgba(34,211,238,.14); }
+.bi-indigo { background:rgba(99,102,241,.1); color:var(--indigo); border:1px solid rgba(99,102,241,.14); }
+.bi-violet { background:rgba(139,92,246,.1); color:var(--violet); border:1px solid rgba(139,92,246,.14); }
+.bi-sky    { background:rgba(14,165,233,.1);  color:#0ea5e9;  border:1px solid rgba(14,165,233,.14); }
+.bi-teal   { background:rgba(20,184,166,.1);  color:#14b8a6;  border:1px solid rgba(20,184,166,.14); }
+.bi-amber  { background:rgba(245,158,11,.1);  color:#f59e0b;  border:1px solid rgba(245,158,11,.14); }
+
+.bcard h5 { font-family:var(--display);font-size:17px;font-weight:700;letter-spacing:-.4px;color:var(--white);margin-bottom:9px; }
+.bcard p  { color:var(--muted);font-size:13.5px;line-height:1.75;font-weight:300; }
+.bcard-link { display:inline-flex;align-items:center;gap:6px;color:var(--cyan);font-size:12px;font-weight:600;text-decoration:none;margin-top:18px;opacity:0;transition:all .3s;transform:translateX(-8px); }
+.bcard:hover .bcard-link { opacity:1;transform:translateX(0); }
+
+/* Wide card sparkline */
+.sparkline { display:flex;align-items:flex-end;gap:4px;height:44px;margin-top:22px; }
+.spark { flex:1;border-radius:3px 3px 0 0;background:linear-gradient(to top,var(--cyan),rgba(34,211,238,.2));animation:sparkAnim 2.4s ease-in-out infinite; }
+.spark:nth-child(1){height:55%;animation-delay:0s}
+.spark:nth-child(2){height:78%;animation-delay:.08s}
+.spark:nth-child(3){height:42%;animation-delay:.16s}
+.spark:nth-child(4){height:88%;animation-delay:.24s}
+.spark:nth-child(5){height:62%;animation-delay:.32s}
+.spark:nth-child(6){height:95%;animation-delay:.4s}
+.spark:nth-child(7){height:70%;animation-delay:.48s}
+.spark:nth-child(8){height:50%;animation-delay:.56s}
+.spark:nth-child(9){height:83%;animation-delay:.64s}
+.spark:nth-child(10){height:60%;animation-delay:.72s}
+@keyframes sparkAnim { 0%,100%{opacity:.7;transform:scaleY(1)} 50%{opacity:1;transform:scaleY(1.12)} }
+
+/* Tiny map dot animation */
+.map-dots { position:relative;height:80px;background:var(--slate);border-radius:12px;margin-top:20px;overflow:hidden; }
+.map-dot { position:absolute;width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 0 rgba(34,211,238,.4);animation:mapPing 2s ease-in-out infinite; }
+.map-dot:nth-child(1){top:30%;left:20%;animation-delay:0s}
+.map-dot:nth-child(2){top:55%;left:48%;animation-delay:.7s}
+.map-dot:nth-child(3){top:25%;left:72%;animation-delay:1.4s}
+.map-line { position:absolute;top:50%;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(34,211,238,.25),transparent); }
+@keyframes mapPing { 0%,100%{box-shadow:0 0 0 0 rgba(34,211,238,.4)} 60%{box-shadow:0 0 0 8px rgba(34,211,238,0)} }
+
+/* ══════════════════════════════════════════════
+   HOW IT WORKS
+══════════════════════════════════════════════ */
+.how-section { padding:130px 0;background:var(--navy2);position:relative;overflow:hidden; }
+.how-section::before { content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(34,211,238,.04),transparent 65%);top:-250px;right:-200px;border-radius:50%; }
+
+/* Grid bg for how section */
+.how-grid { position:absolute;inset:0;background-image:linear-gradient(rgba(34,211,238,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,.025) 1px,transparent 1px);background-size:48px 48px; }
+
+.step-list { display:flex;flex-direction:column;gap:0; }
+.step-item { display:flex;gap:26px;padding:30px 0;position:relative;border-bottom:1px solid var(--border); }
+.step-item:last-child { border-bottom:none; }
+.step-num-wrap { position:relative;flex-shrink:0; }
+.step-num { width:52px;height:52px;border-radius:15px;background:var(--navy3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;color:var(--cyan);font-weight:500;transition:all .35s;position:relative;z-index:1; }
+.step-item:hover .step-num { background:rgba(34,211,238,.1);border-color:rgba(34,211,238,.3);box-shadow:0 0 22px rgba(34,211,238,.15); }
+.step-connector { position:absolute;left:25px;top:52px;bottom:-30px;width:1px;background:linear-gradient(to bottom,rgba(34,211,238,.2),transparent); }
+.step-item:last-child .step-connector { display:none; }
+.step-body { padding-top:10px; }
+.step-body h5 { font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:-.4px;color:var(--white);margin-bottom:7px; }
+.step-body p { color:var(--muted);font-size:14px;line-height:1.75;font-weight:300;max-width:340px; }
+
+/* How section — right panel */
+.how-panel {
+  background: var(--navy3);
+  border: 1px solid var(--border);
+  border-radius: 26px;
+  padding: 30px;
+  height: 100%;
+  position: relative; overflow: hidden;
+}
+.how-panel::before { content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,var(--cyan),var(--indigo),transparent); }
+.how-panel-tag { font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:26px; }
+.how-panel-tag::after { content:'';flex:1;height:1px;background:var(--border); }
+
+/* Delivery timeline in panel */
+.dtl { display:flex;flex-direction:column;gap:0;position:relative; }
+.dtl-item { display:flex;align-items:flex-start;gap:16px;padding:16px 0; }
+.dtl-icon { width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;position:relative;z-index:1; }
+.dtl-icon.done  { background:rgba(34,211,238,.12);color:var(--cyan);border:1px solid rgba(34,211,238,.25); }
+.dtl-icon.active{ background:rgba(99,102,241,.15);color:var(--indigo);border:1px solid rgba(99,102,241,.3);animation:activePulse 2s ease-in-out infinite; }
+.dtl-icon.pend  { background:var(--slate);color:var(--muted);border:1px solid var(--border);opacity:.5; }
+@keyframes activePulse { 0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.3)} 60%{box-shadow:0 0 0 8px rgba(99,102,241,0)} }
+.dtl-line { position:absolute;left:17px;width:1px; }
+.dtl-line1 { top:52px;height:52px;background:linear-gradient(to bottom,var(--cyan),rgba(34,211,238,.2)); }
+.dtl-line2 { top:104px;height:52px;background:linear-gradient(to bottom,var(--indigo),rgba(99,102,241,.1)); }
+.dtl-line3 { top:156px;height:52px;background:var(--border); }
+.dtl-text { padding-top:6px; }
+.dtl-text strong { font-family:var(--display);font-size:14px;font-weight:700;color:var(--white);letter-spacing:-.2px; }
+.dtl-text p { font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.4px;margin-top:3px; }
+.dtl-text p.active-txt { color:var(--cyan); }
+
+/* AI score bar inside panel */
+.ai-score-bar { margin-top: 20px;padding-top:20px;border-top:1px solid var(--border); }
+.asb-header { display:flex;justify-content:space-between;margin-bottom:8px; }
+.asb-label { font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase; }
+.asb-val   { font-family:var(--mono);font-size:10px;color:var(--cyan); }
+.asb-track { height:4px;background:var(--slate2);border-radius:4px; }
+.asb-fill  { height:100%;border-radius:4px;background:linear-gradient(90deg,var(--cyan),var(--indigo));animation:asbGrow 1.8s cubic-bezier(.23,1,.32,1) .4s both; }
+@keyframes asbGrow { from{width:0} }
+
+/* ══════════════════════════════════════════════
+   TESTIMONIALS
+══════════════════════════════════════════════ */
+.testi-section { padding:130px 0;background:var(--navy); }
+.tcard { background:var(--navy2);border:1px solid var(--border);border-radius:22px;padding:32px 30px;transition:all .35s;height:100%; }
+.tcard:hover { transform:translateY(-5px);box-shadow:0 20px 50px rgba(0,0,0,.35);border-color:var(--border2); }
+.tcard-stars { color:#facc15;font-size:13px;letter-spacing:2px;margin-bottom:14px; }
+.tcard-text { font-size:14.5px;color:var(--dim);font-style:italic;font-weight:300;line-height:1.8;margin-bottom:22px; }
+.tcard-author { display:flex;align-items:center;gap:13px; }
+.tcard-avatar { width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:15px;color:var(--navy); }
+.tcard-name { font-family:var(--display);font-size:13.5px;font-weight:700;letter-spacing:-.2px; }
+.tcard-role { font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.4px;margin-top:2px; }
+
+/* ══════════════════════════════════════════════
+   CTA
+══════════════════════════════════════════════ */
+.cta { padding:130px 0;background:var(--navy2); }
+.cta-box {
+  background: var(--navy3);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  padding: 88px 72px;
+  position: relative; overflow: hidden; text-align: center;
+}
+.cta-box::before { content:'';position:absolute;width:800px;height:800px;background:radial-gradient(circle,rgba(34,211,238,.08),transparent 65%);top:50%;left:50%;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none; }
+.cta-box::after { content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(34,211,238,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,.025) 1px,transparent 1px);background-size:44px 44px; }
+.cta-box > * { position:relative;z-index:1; }
+.cta-box h2 { font-family:var(--display);font-size:clamp(32px,5vw,62px);font-weight:800;letter-spacing:-2.5px;color:var(--white);line-height:1.06; }
+.cta-box p { color:var(--muted);font-size:16px;font-weight:300;margin-top:16px; }
+
+/* ══════════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════════ */
+.footer { background:#04060d;border-top:1px solid var(--border);padding:80px 0 30px; }
+.footer-brand { font-family:var(--display);font-weight:800;font-size:19px;color:var(--white);display:flex;align-items:center;gap:9px;margin-bottom:13px; }
+.footer-desc { color:var(--muted);font-size:13.5px;font-weight:300;max-width:230px;line-height:1.8; }
+.footer-head { font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:20px; }
+.footer-link { display:block;color:rgba(241,245,249,.38);text-decoration:none;font-size:13.5px;font-weight:400;margin-bottom:11px;transition:color .2s; }
+.footer-link:hover { color:var(--cyan); }
+.footer-bottom { border-top:1px solid var(--border);margin-top:56px;padding-top:26px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-family:var(--mono);font-size:11px;color:var(--muted); }
+.social-btn { display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid var(--border);border-radius:9px;color:var(--muted);text-decoration:none;font-size:13px;transition:all .2s;margin-right:7px; }
+.social-btn:hover { border-color:var(--cyan);color:var(--cyan);background:rgba(34,211,238,.06); }
+
+/* ── TICKER ── */
+.ticker-outer { background:var(--slate);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:9px 0;overflow:hidden; }
+.ticker-track { display:flex;gap:56px;animation:tickerRoll 28s linear infinite;width:max-content; }
+.ticker-item { display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap; }
+.ticker-item i { color:var(--cyan);font-size:11px; }
+@keyframes tickerRoll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+/* ── RESPONSIVE ── */
+@media(max-width:991px) {
+  .bento { grid-template-columns:repeat(6,1fr); }
+  .bcard.c4,.bcard.c3 { grid-column:span 6; }
+  .bcard.c8,.bcard.c6 { grid-column:span 6; }
+  .float-card { display:none; }
+  .hero { padding-top:120px; }
+  .cta-box { padding:52px 32px; }
+}
+@media(max-width:575px) {
+  .bento { grid-template-columns:1fr; }
+  .bcard { grid-column:span 1 !important; }
+  body { cursor:auto; }
+  #cur,#cur-ring { display:none; }
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-ring"></div>
+
+<!-- ═══ NAVBAR ═══ -->
+<nav class="navbar navbar-expand-lg" id="navbar">
+  <div class="container">
+    <a class="navbar-brand" href="#">
+      <div class="brand-pulse"></div>
+      SmartParcel AI
+    </a>
+    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto align-items-center gap-1">
+        <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+        <li class="nav-item"><a class="nav-link" href="#how">How It Works</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">Login</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/login"><i class="bi bi-person-circle me-2"></i>Customer Login</a></li>
+            <li><a class="dropdown-item" href="/admin-login"><i class="bi bi-shield-lock me-2"></i>Admin Login</a></li>
+          </ul>
+        </li>
+        <li class="nav-item ms-2">
+          <a href="/register" class="btn-register nav-link">Register Free</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero" id="home">
+  <div class="hero-grid"></div>
+  <div class="mesh mesh1"></div>
+  <div class="mesh mesh2"></div>
+  <div class="mesh mesh3"></div>
+  <div class="scanlines"></div>
+  <div class="bracket bracket-tl"></div>
+  <div class="bracket bracket-tr"></div>
+  <div class="bracket bracket-bl"></div>
+  <div class="bracket bracket-br"></div>
+
+  <div class="container hero-inner">
+    <div class="row align-items-center gy-5">
+
+      <!-- LEFT -->
+      <div class="col-lg-6" data-aos="fade-right" data-aos-duration="850">
+        <div class="hero-tag"><div class="tag-bar"></div>AI-Powered Logistics Platform</div>
+        <h1 class="hero-heading">
+          Predict.<br>
+          <span class="hl">Optimize.</span><br>
+          <span class="ghost">Deliver.</span>
+        </h1>
+        <p class="hero-sub">
+          Machine learning delivery predictions with 97.4% accuracy. Smart route optimization, real-time tracking — built for modern Indian e-commerce.
+        </p>
+        <div class="hero-btns">
+          <a href="/login" class="btn-primary-hero">
+            Get Started <i class="bi bi-arrow-right"></i>
+          </a>
+          <a href="#features" class="btn-secondary-hero">
+            <i class="bi bi-play-circle"></i> See Features
+          </a>
+        </div>
+      </div>
+
+      <!-- RIGHT — Live Order Widget -->
+      <div class="col-lg-6" data-aos="fade-left" data-aos-duration="850" data-aos-delay="120">
+        <div style="position:relative;">
+          <div class="live-order-card">
+            <div class="loc-header">
+              <div class="loc-dots"><div class="loc-dot"></div><div class="loc-dot"></div><div class="loc-dot"></div></div>
+              <div class="loc-title">SHIPMENT_TRACKER · v2.4</div>
+              <div class="loc-live"><div class="live-dot"></div>LIVE</div>
+            </div>
+            <div class="loc-body">
+              <!-- Order ID -->
+              <div class="order-id-row">
+                <div class="oid">#SPA-2026-88471</div>
+                <div class="status-badge">⚡ IN TRANSIT</div>
+              </div>
+              <!-- Progress -->
+              <div class="progress-track">
+                <div class="track-labels">
+                  <span>ORDERED</span><span>PACKED</span><span>TRANSIT</span><span>OUT</span><span>DELIVERED</span>
+                </div>
+                <div class="track-bar"><div class="track-fill"></div></div>
+                <div class="track-nodes">
+                  <div class="track-node"><div class="tnode-dot done"></div><div class="tnode-lbl">Done</div></div>
+                  <div class="track-node"><div class="tnode-dot done"></div><div class="tnode-lbl">Done</div></div>
+                  <div class="track-node"><div class="tnode-dot active"></div><div class="tnode-lbl act">Now</div></div>
+                  <div class="track-node"><div class="tnode-dot pending"></div><div class="tnode-lbl">Soon</div></div>
+                  <div class="track-node"><div class="tnode-dot pending"></div><div class="tnode-lbl">Pend.</div></div>
+                </div>
+              </div>
+              <!-- AI ETA -->
+              <div class="ai-eta-box">
+                <div class="ai-eta-left">
+                  <div class="label">AI PREDICTED ETA</div>
+                  <div class="ai-eta-num">2h 18m <span>remaining</span></div>
+                </div>
+                <div class="ai-conf">
+                  <div class="conf-ring">
+                    <svg width="52" height="52" viewBox="0 0 52 52">
+                      <circle class="bg" cx="26" cy="26" r="20"/>
+                      <circle class="fg" cx="26" cy="26" r="20"/>
+                    </svg>
+                  </div>
+                  <div class="conf-pct">97.4% CONF.</div>
+                </div>
+              </div>
+              <!-- Chips -->
+              <div class="chip-row">
+                <div class="chip"><i class="bi bi-geo-alt-fill"></i>Mumbai → Delhi</div>
+                <div class="chip"><i class="bi bi-truck"></i>NH-48 Optimized</div>
+                <div class="chip"><i class="bi bi-thermometer-half"></i>On Schedule</div>
+              </div>
+            </div>
+          </div>
+          <!-- Floating mini cards -->
+          <div class="float-card fc1">
+            <div class="fc-label">ROUTE SAVING</div>
+            <div class="fc-value">34% Faster</div>
+            <div class="fc-sub">AI optimized path</div>
+          </div>
+          <div class="float-card fc2">
+            <div class="fc-label">PARCELS TODAY</div>
+            <div class="fc-value">18,241</div>
+            <div class="fc-sub">↑ 12% vs yesterday</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="hero-stats">
+      <div class="row gy-4">
+        <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="0">
+          <div class="stat-num" data-target="97.4" data-suf="%">0%</div>
+          <div class="stat-label">Prediction Accuracy</div>
+          <div class="stat-up"><i class="bi bi-arrow-up-short"></i>+2.1% this quarter</div>
+        </div>
+        <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="80">
+          <div class="stat-num" data-target="2.4" data-suf="M+">0</div>
+          <div class="stat-label">Parcels Predicted</div>
+          <div class="stat-up"><i class="bi bi-arrow-up-short"></i>+18k today</div>
+        </div>
+        <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="160">
+          <div class="stat-num" data-target="34" data-suf="%">0%</div>
+          <div class="stat-label">Faster Routes</div>
+          <div class="stat-up"><i class="bi bi-arrow-up-short"></i>vs manual planning</div>
+        </div>
+        <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="240">
+          <div class="stat-num" data-target="150" data-suf="+">0</div>
+          <div class="stat-label">Cities Covered</div>
+          <div class="stat-up"><i class="bi bi-arrow-up-short"></i>Expanding weekly</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TICKER ═══ -->
+<div class="ticker-outer">
+  <div class="ticker-track">
+    <div class="ticker-item"><i class="bi bi-cpu"></i>AI Prediction Engine</div>
+    <div class="ticker-item"><i class="bi bi-lightning-charge"></i>Real-Time Routing</div>
+    <div class="ticker-item"><i class="bi bi-graph-up-arrow"></i>97.4% Accuracy</div>
+    <div class="ticker-item"><i class="bi bi-globe"></i>150+ Indian Cities</div>
+    <div class="ticker-item"><i class="bi bi-shield-check"></i>AES-256 Encrypted</div>
+    <div class="ticker-item"><i class="bi bi-truck"></i>Live Parcel Tracking</div>
+    <div class="ticker-item"><i class="bi bi-stars"></i>ML Powered ETA</div>
+    <div class="ticker-item"><i class="bi bi-speedometer2"></i>34% Faster Delivery</div>
+    <div class="ticker-item"><i class="bi bi-cpu"></i>AI Prediction Engine</div>
+    <div class="ticker-item"><i class="bi bi-lightning-charge"></i>Real-Time Routing</div>
+    <div class="ticker-item"><i class="bi bi-graph-up-arrow"></i>97.4% Accuracy</div>
+    <div class="ticker-item"><i class="bi bi-globe"></i>150+ Indian Cities</div>
+    <div class="ticker-item"><i class="bi bi-shield-check"></i>AES-256 Encrypted</div>
+    <div class="ticker-item"><i class="bi bi-truck"></i>Live Parcel Tracking</div>
+    <div class="ticker-item"><i class="bi bi-stars"></i>ML Powered ETA</div>
+    <div class="ticker-item"><i class="bi bi-speedometer2"></i>34% Faster Delivery</div>
+  </div>
+</div>
+
+<!-- ═══ TRUST BAR ═══ -->
+<div class="trust-bar">
+  <div class="container">
+    <div class="d-flex align-items-center flex-wrap gap-4">
+      <span class="trust-label me-2">Trusted by</span>
+      <div class="trust-logos">
+        <span class="trust-logo">Flipkart</span>
+        <span class="trust-logo">Meesho</span>
+        <span class="trust-logo">Nykaa</span>
+        <span class="trust-logo">Myntra</span>
+        <span class="trust-logo">Snapdeal</span>
+        <span class="trust-logo">Mamaearth</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FEATURES ═══ -->
+<section class="features-section" id="features">
+  <div class="container">
+    <div class="row justify-content-center text-center mb-2">
+      <div class="col-lg-6" data-aos="fade-up">
+        <div class="eyebrow"><div class="eyebrow-line"></div>Why Choose SmartParcel AI</div>
+        <h2 class="sec-heading">Everything Your<br>Logistics Needs</h2>
+        <p class="sec-sub mx-auto">One intelligent platform — prediction, routing, tracking and analytics at scale.</p>
+      </div>
+    </div>
+
+    <div class="bento">
+      <!-- Row 1 -->
+      <div class="bcard c8" data-aos="fade-up" data-aos-delay="0">
+        <div class="bicon bi-cyan"><i class="bi bi-robot"></i></div>
+        <h5>AI Delivery Time Prediction</h5>
+        <p>Our neural network analyzes 47 real-time variables — traffic, weather, warehouse load and historical data — to predict exact delivery windows with 97.4% accuracy across 150+ cities.</p>
+        <div class="sparkline">
+          <div class="spark"></div><div class="spark"></div><div class="spark"></div><div class="spark"></div>
+          <div class="spark"></div><div class="spark"></div><div class="spark"></div><div class="spark"></div>
+          <div class="spark"></div><div class="spark"></div>
+        </div>
+        <a href="#" class="bcard-link">Explore model <i class="bi bi-arrow-right"></i></a>
+      </div>
+
+      <div class="bcard c4" data-aos="fade-up" data-aos-delay="60">
+        <div class="bicon bi-indigo"><i class="bi bi-map"></i></div>
+        <h5>Route Optimization</h5>
+        <p>Dynamic AI routing updates in real-time — cutting fuel costs by up to 28% and delivery time by 34%.</p>
+        <div class="map-dots">
+          <div class="map-line"></div>
+          <div class="map-dot"></div>
+          <div class="map-dot"></div>
+          <div class="map-dot"></div>
+        </div>
+        <a href="#" class="bcard-link">See routing <i class="bi bi-arrow-right"></i></a>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="bcard c4" data-aos="fade-up" data-aos-delay="0">
+        <div class="bicon bi-sky"><i class="bi bi-speedometer2"></i></div>
+        <h5>Real-Time Tracking</h5>
+        <p>Live parcel location with smart ETA recalculations. Customers always know exactly where their order is.</p>
+        <a href="#" class="bcard-link">Try demo <i class="bi bi-arrow-right"></i></a>
+      </div>
+
+      <div class="bcard c4" data-aos="fade-up" data-aos-delay="60">
+        <div class="bicon bi-violet"><i class="bi bi-bar-chart-line"></i></div>
+        <h5>Analytics Dashboard</h5>
+        <p>Deep insights into delivery KPIs, driver efficiency, SLA compliance, and customer satisfaction scores.</p>
+        <a href="#" class="bcard-link">View dashboard <i class="bi bi-arrow-right"></i></a>
+      </div>
+
+      <div class="bcard c4" data-aos="fade-up" data-aos-delay="120">
+        <div class="bicon bi-teal"><i class="bi bi-bell"></i></div>
+        <h5>Smart Notifications</h5>
+        <p>Automated SMS, email and push alerts at every milestone. Reduce support tickets by 60%.</p>
+        <a href="#" class="bcard-link">Learn more <i class="bi bi-arrow-right"></i></a>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="bcard c6" data-aos="fade-up" data-aos-delay="0">
+        <div class="bicon bi-amber"><i class="bi bi-shield-check"></i></div>
+        <h5>Enterprise-Grade Security</h5>
+        <p>AES-256 encrypted delivery data, GDPR compliant infrastructure, full audit trails, and role-based access controls for every team member.</p>
+        <a href="#" class="bcard-link">Security docs <i class="bi bi-arrow-right"></i></a>
+      </div>
+
+      <div class="bcard c6" data-aos="fade-up" data-aos-delay="60">
+        <div class="bicon bi-indigo"><i class="bi bi-plug"></i></div>
+        <h5>Seamless Integrations</h5>
+        <p>Connect directly with Shopify, WooCommerce, Magento, and 40+ platforms via REST API or one-click plugins. Go live in under 10 minutes.</p>
+        <a href="#" class="bcard-link">View integrations <i class="bi bi-arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ HOW IT WORKS ═══ -->
+<section class="how-section" id="how">
+  <div class="how-grid"></div>
+  <div class="container" style="position:relative;z-index:2;">
+    <div class="row align-items-center gy-5">
+
+      <!-- Left steps -->
+      <div class="col-lg-6" data-aos="fade-right">
+        <div class="eyebrow"><div class="eyebrow-line"></div>Process</div>
+        <h2 class="sec-heading">Delivery Intelligence<br>in 4 Steps</h2>
+        <p class="sec-sub" style="margin-bottom:44px;">From order placed to doorstep — AI manages every decision in milliseconds.</p>
+
+        <div class="step-list">
+          <div class="step-item" data-aos="fade-right" data-aos-delay="0">
+            <div class="step-num-wrap">
+              <div class="step-num">01</div>
+              <div class="step-connector"></div>
+            </div>
+            <div class="step-body">
+              <h5>Order Ingestion</h5>
+              <p>Connect your store via REST API or dashboard. Orders sync automatically in milliseconds with zero manual input.</p>
+            </div>
+          </div>
+          <div class="step-item" data-aos="fade-right" data-aos-delay="80">
+            <div class="step-num-wrap">
+              <div class="step-num">02</div>
+              <div class="step-connector"></div>
+            </div>
+            <div class="step-body">
+              <h5>AI Prediction & Planning</h5>
+              <p>Neural model calculates ETA, selects optimal route, and assigns the best available driver — all under 2 seconds.</p>
+            </div>
+          </div>
+          <div class="step-item" data-aos="fade-right" data-aos-delay="160">
+            <div class="step-num-wrap">
+              <div class="step-num">03</div>
+              <div class="step-connector"></div>
+            </div>
+            <div class="step-body">
+              <h5>Live Dispatch & Monitoring</h5>
+              <p>Drivers receive smart instructions. Customers get live tracking with real-time ETA updates at every milestone.</p>
+            </div>
+          </div>
+          <div class="step-item" data-aos="fade-right" data-aos-delay="240">
+            <div class="step-num-wrap">
+              <div class="step-num">04</div>
+            </div>
+            <div class="step-body">
+              <h5>Proof of Delivery</h5>
+              <p>Digital signature, photo capture and instant receipt — all logged with full cryptographic timestamp chain.</p>
+            </div>
+          </div>
+        </div>
+
+        <a href="/register" class="btn-primary-hero d-inline-flex mt-5">
+          Start Free <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- Right panel -->
+      <div class="col-lg-5 offset-lg-1" data-aos="fade-left">
+        <div class="how-panel">
+          <div class="how-panel-tag">Live Order · #SPA-2026-88471</div>
+          <div class="dtl" style="position:relative;min-height:280px;">
+            <div class="dtl-line dtl-line1"></div>
+            <div class="dtl-line dtl-line2"></div>
+            <div class="dtl-line dtl-line3"></div>
+
+            <div class="dtl-item">
+              <div class="dtl-icon done"><i class="bi bi-check-lg"></i></div>
+              <div class="dtl-text">
+                <strong>Order Placed & Confirmed</strong>
+                <p>09:14:02 AM · Auto-ingested via API</p>
+              </div>
+            </div>
+            <div class="dtl-item">
+              <div class="dtl-icon done"><i class="bi bi-check-lg"></i></div>
+              <div class="dtl-text">
+                <strong>AI Route Calculated</strong>
+                <p>09:14:04 AM · NH-48 · 34% optimized</p>
+              </div>
+            </div>
+            <div class="dtl-item">
+              <div class="dtl-icon active"><i class="bi bi-truck"></i></div>
+              <div class="dtl-text">
+                <strong>In Transit — Mumbai → Delhi</strong>
+                <p class="active-txt">ETA: 2h 18min · Live tracking ON</p>
+              </div>
+            </div>
+            <div class="dtl-item" style="opacity:.4;">
+              <div class="dtl-icon pend"><i class="bi bi-house"></i></div>
+              <div class="dtl-text">
+                <strong>Delivered</strong>
+                <p>Pending · Proof of delivery queued</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI confidence bar -->
+          <div class="ai-score-bar">
+            <div class="asb-header">
+              <span class="asb-label">AI Prediction Confidence</span>
+              <span class="asb-val">97.4%</span>
+            </div>
+            <div class="asb-track">
+              <div class="asb-fill" style="width:97.4%"></div>
+            </div>
+
+            <div class="asb-header mt-3">
+              <span class="asb-label">Route Efficiency Score</span>
+              <span class="asb-val" style="color:var(--indigo);">91.2%</span>
+            </div>
+            <div class="asb-track">
+              <div class="asb-fill" style="width:91.2%;background:linear-gradient(90deg,var(--indigo),var(--violet));"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TESTIMONIALS ═══ -->
+<section class="testi-section" id="about">
+  <div class="container">
+    <div class="text-center mb-5" data-aos="fade-up">
+      <div class="eyebrow" style="justify-content:center;"><div class="eyebrow-line"></div>Testimonials<div class="eyebrow-line"></div></div>
+      <h2 class="sec-heading mt-2">Loved by Logistics Teams</h2>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="0">
+        <div class="tcard">
+          <div class="tcard-stars">★★★★★</div>
+          <p class="tcard-text">"SmartParcel AI cut our delivery failures by 40% in month one. The AI route optimization paid for itself three times over in the first quarter alone."</p>
+          <div class="tcard-author">
+            <div class="tcard-avatar" style="background:linear-gradient(135deg,var(--cyan),var(--indigo));">R</div>
+            <div>
+              <div class="tcard-name">Rahul Sharma</div>
+              <div class="tcard-role">HEAD OF OPS · QUICKMART</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="tcard">
+          <div class="tcard-stars">★★★★★</div>
+          <p class="tcard-text">"Customers track their parcels in real-time now. Support tickets dropped 55%. This platform is a genuine game-changer for e-commerce logistics at scale."</p>
+          <div class="tcard-author">
+            <div class="tcard-avatar" style="background:linear-gradient(135deg,var(--violet),var(--indigo));">P</div>
+            <div>
+              <div class="tcard-name">Priya Menon</div>
+              <div class="tcard-role">FOUNDER · STYLEBOX INDIA</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="tcard">
+          <div class="tcard-stars">★★★★★</div>
+          <p class="tcard-text">"Integration was seamless — live in 48 hours. The prediction accuracy is shockingly good. We hit 98% on-time delivery last quarter, a company record."</p>
+          <div class="tcard-author">
+            <div class="tcard-avatar" style="background:linear-gradient(135deg,#14b8a6,var(--cyan));">A</div>
+            <div>
+              <div class="tcard-name">Aditya Joshi</div>
+              <div class="tcard-role">CTO · DELIVERNOW</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA ═══ -->
+<section class="cta">
+  <div class="container">
+    <div class="cta-box" data-aos="zoom-in">
+      <h2>Start Your Smart<br>Delivery Today</h2>
+      <p>Create your account and experience AI-powered logistics. No credit card required.</p>
+      <div class="hero-btns mt-5" style="justify-content:center;">
+        <a href="/register" class="btn-primary-hero">Create Account <i class="bi bi-arrow-right"></i></a>
+        <a href="/login" class="btn-secondary-hero">Sign In</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="footer">
+  <div class="container">
+    <div class="row gy-5">
+      <div class="col-lg-4">
+        <div class="footer-brand"><div class="brand-pulse"></div>SmartParcel AI</div>
+        <p class="footer-desc">AI-powered delivery intelligence for modern e-commerce. Predict, optimize, deliver — at scale.</p>
+        <div class="mt-4">
+          <a href="#" class="social-btn"><i class="bi bi-twitter-x"></i></a>
+          <a href="#" class="social-btn"><i class="bi bi-linkedin"></i></a>
+          <a href="#" class="social-btn"><i class="bi bi-github"></i></a>
+          <a href="#" class="social-btn"><i class="bi bi-instagram"></i></a>
+        </div>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div class="footer-head">Product</div>
+        <a href="#features" class="footer-link">Features</a>
+        <a href="#" class="footer-link">Pricing</a>
+        <a href="#" class="footer-link">API Docs</a>
+        <a href="#" class="footer-link">Changelog</a>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div class="footer-head">Company</div>
+        <a href="#" class="footer-link">About Us</a>
+        <a href="#" class="footer-link">Blog</a>
+        <a href="#" class="footer-link">Careers</a>
+        <a href="#" class="footer-link">Contact</a>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div class="footer-head">Account</div>
+        <a href="/login" class="footer-link">Customer Login</a>
+        <a href="/admin-login" class="footer-link">Admin Login</a>
+        <a href="/register" class="footer-link">Register Free</a>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div class="footer-head">Legal</div>
+        <a href="#" class="footer-link">Privacy Policy</a>
+        <a href="#" class="footer-link">Terms of Service</a>
+        <a href="#" class="footer-link">Security</a>
+        <a href="#" class="footer-link">Cookie Policy</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 SmartParcel AI · All rights reserved</span>
+      <span>Built with ♥ for Indian E-Commerce 🇮🇳</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══ SCRIPTS ═══ -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+<script>
+/* AOS */
+AOS.init({ once: true, offset: 50, duration: 800 });
+
+/* Navbar scroll */
+const nb = document.getElementById('navbar');
+window.addEventListener('scroll', () => nb.classList.toggle('stuck', scrollY > 60));
+
+/* Custom cursor */
+const cur = document.getElementById('cur'), ring = document.getElementById('cur-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cur.style.left = mx+'px'; cur.style.top = my+'px';
+});
+(function loop(){
+  rx += (mx-rx)*.12; ry += (my-ry)*.12;
+  ring.style.left = rx+'px'; ring.style.top = ry+'px';
+  requestAnimationFrame(loop);
+})();
+document.querySelectorAll('a,button').forEach(el => {
+  el.addEventListener('mouseenter', () => { cur.style.transform='translate(-50%,-50%) scale(2.5)'; ring.style.transform='translate(-50%,-50%) scale(1.5)'; ring.style.borderColor='rgba(34,211,238,.7)'; });
+  el.addEventListener('mouseleave', () => { cur.style.transform='translate(-50%,-50%) scale(1)'; ring.style.transform='translate(-50%,-50%) scale(1)'; ring.style.borderColor='rgba(34,211,238,.4)'; });
+});
+
+/* Bento mouse-glow */
+document.querySelectorAll('.bcard').forEach(c => {
+  c.addEventListener('mousemove', e => {
+    const r = c.getBoundingClientRect();
+    c.style.setProperty('--mx', ((e.clientX-r.left)/r.width*100)+'%');
+    c.style.setProperty('--my', ((e.clientY-r.top)/r.height*100)+'%');
+  });
+});
+
+/* Counter animation */
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(en => {
+    if (!en.isIntersecting) return;
+    const el = en.target;
+    const tgt = parseFloat(el.dataset.target), suf = el.dataset.suf || '';
+    let v = 0;
+    const t = setInterval(() => {
+      v += tgt / (1800/16);
+      if (v >= tgt) { v = tgt; clearInterval(t); }
+      el.textContent = (Number.isInteger(tgt) ? Math.floor(v) : v.toFixed(1)) + suf;
+    }, 16);
+    obs.unobserve(el);
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('.stat-num[data-target]').forEach(el => obs.observe(el));
+
+/* Type-on order ID */
+const oidEl = document.querySelector('.oid');
+if (oidEl) {
+  const txt = oidEl.textContent.trim();
+  oidEl.textContent = '';
+  let i = 0;
+  setTimeout(() => {
+    const t = setInterval(() => {
+      oidEl.textContent += txt[i++];
+      if (i >= txt.length) clearInterval(t);
+    }, 55);
+  }, 900);
+}
+</script>
+</body>
+</html>

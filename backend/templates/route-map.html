@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Delivery Route</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+
+#map{
+height:500px;
+width:100%;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>🚚 Delivery Route Optimization</h2>
+
+<div id="map"></div>
+
+{% raw %}
+<script>
+
+// Warehouse location (example)
+var warehouse = [19.0760, 72.8777]; 
+
+// Customer location
+var customer = [19.2183, 72.9781];
+
+// Map create
+var map = L.map('map').setView(warehouse, 11);
+
+L.tileLayer(
+'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+).addTo(map);
+
+// Warehouse marker
+L.marker(warehouse)
+.addTo(map)
+.bindPopup("Warehouse");
+
+// Customer marker
+L.marker(customer)
+.addTo(map)
+.bindPopup("Customer Location");
+
+// Route line
+var latlngs = [
+warehouse,
+customer
+];
+
+var polyline = L.polyline(latlngs, {
+color:'blue'
+}).addTo(map);
+
+map.fitBounds(polyline.getBounds());
+
+</script>
+{% endraw %}
+
+</body>
+</html>
